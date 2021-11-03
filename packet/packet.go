@@ -78,3 +78,10 @@ func (packet *ServerPacket) SendUdpStream(udpConnection *net.UDPConn, udpAddress
 	}
 	return udpConnection.WriteToUDP([]byte(packetJson), udpAddress)
 }
+func (packet *ServerPacket) SendUdpStream2(udpConnection *net.UDPConn) (int, error) {
+	packetJson, err := json.Marshal(*packet)
+	if err != nil {
+		return 0, fmt.Errorf("error while marshaling UDP packet")
+	}
+	return udpConnection.Write([]byte(packetJson))
+}

@@ -22,21 +22,30 @@ The unity game client I built wont be released as I respect the developers of "A
 
 func main() {
 	// init variables
-	initSpawnPosition()
 
 	// get program flags
 	var host = flag.String("ip", "127.0.0.1", "Server listen IP")
 	var port = flag.Int("port", 27403, "Server listen port")
+	var isclient = flag.Bool("client", false, "client")
 	flag.Parse()
 
-	log.Printf("Starting listening on: %s:%d", *host, *port)
+	if *isclient {
+		log.Printf("Starting client")
 
-	// start listening
-	go tcp.ListenTCP(*host, *port)
-	go udp.ListenUDP(*host, *port)
+		client()
 
-	// block main thread with the console
-	cli.ConsoleCLI()
+	} else {
+		initSpawnPosition()
+		log.Printf("Starting listening on: %s:%d", *host, *port)
+
+		// start listening
+		go tcp.ListenTCP(*host, *port)
+		go udp.ListenUDP(*host, *port)
+
+		// block main thread with the console
+		cli.ConsoleCLI()
+
+	}
 }
 
 // func (p player.Player) isInFilter(filter []string) bool {

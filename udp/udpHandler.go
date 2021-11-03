@@ -113,6 +113,7 @@ func handleIncomingUdpData() {
 }
 
 func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket) error {
+	log.Println(clientPacket)
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
 		if user, ok := globals.PlayerList[clientPacket.PlayerID]; ok {
 			user.UdpAddress = userAddress
