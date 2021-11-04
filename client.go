@@ -40,9 +40,11 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 	}
 
 }
+
+var user player.Player
+
 func client() {
 
-	var user player.Player
 	udpAddr, _ := net.ResolveUDPAddr("udp4", *host+":"+strconv.Itoa(*port))
 	// user.UdpAddress = &net.UDPAddr{
 	// 	IP:   net.IPv4(127, 0, 0, 1),
@@ -61,61 +63,66 @@ func client() {
 			continue
 		}
 		go getIncomingClientUdp(udpConnection)
-		for {
-			var command string
-			fmt.Scanln(&command)
-			commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
-			switch commands[0] {
-			case "help", "h":
-				log.Println("help(h)")
-				log.Println("login(lg)")
-				log.Println("disconnet(dc) [id]")
-			case "login", "lg":
-				packetToSend := packet.StampPacket(user, packet.DialAddr)
-
-				_, err = packetToSend.SendUdpStream2(udpConnection)
-				if err != nil {
-					log.Println(err)
-				}
-			case "init", "it", "1":
-				user.Name = "peter"
-				user.Color = 1
-				user.Id = 1
-				packetToSend := packet.StampPacket(user, packet.InitUser)
-
-				_, err = packetToSend.SendUdpStream2(udpConnection)
-				if err != nil {
-					log.Println(err)
-				}
-			case "2":
-				user.Name = "leo"
-				user.Color = 2
-				user.Id = 2
-				packetToSend := packet.StampPacket(user, packet.InitUser)
-
-				_, err = packetToSend.SendUdpStream2(udpConnection)
-				if err != nil {
-					log.Println(err)
-				}
-			case "3":
-				user.Name = "alex"
-				user.Color = 3
-				user.Id = 3
-				packetToSend := packet.StampPacket(user, packet.InitUser)
-
-				_, err = packetToSend.SendUdpStream2(udpConnection)
-				if err != nil {
-					log.Println(err)
-				}
-			case "disconnet", "dc":
-				_, err := strconv.Atoi(commands[1])
-				if err != nil {
-					log.Println("Cant convert to number position")
-				}
-			default:
-				log.Println("Unknown command")
-			}
-		}
+		ClientConsoleCLI(udpConnection)
 	}
 
+}
+
+func ClientConsoleCLI(udpConnection *net.UDPConn) {
+
+	for {
+		var command string
+		fmt.Scanln(&command)
+		commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
+		switch commands[0] {
+		case "help", "h":
+			log.Println("help(h)")
+			log.Println("login(lg)")
+			log.Println("disconnet(dc) [id]")
+		case "login", "lg":
+			packetToSend := packet.StampPacket(user, packet.DialAddr)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log.Println(err)
+			}
+		case "init", "it", "1":
+			user.Name = "peter"
+			user.Color = 1
+			user.Id = 1
+			packetToSend := packet.StampPacket(user, packet.InitUser)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log.Println(err)
+			}
+		case "2":
+			user.Name = "leo"
+			user.Color = 2
+			user.Id = 2
+			packetToSend := packet.StampPacket(user, packet.InitUser)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log.Println(err)
+			}
+		case "3":
+			user.Name = "alex"
+			user.Color = 3
+			user.Id = 3
+			packetToSend := packet.StampPacket(user, packet.InitUser)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log.Println(err)
+			}
+		case "disconnet", "dc":
+			_, err := strconv.Atoi(commands[1])
+			if err != nil {
+				log.Println("Cant convert to number position")
+			}
+		default:
+			log.Println("Unknown command")
+		}
+	}
 }
