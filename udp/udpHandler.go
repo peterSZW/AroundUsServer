@@ -104,7 +104,7 @@ func handleIncomingUdpData() {
 			continue
 		}
 
-		err = handleUdpData(dequeuedPacket.Address, dataPacket)
+		err = handleUdpData(dequeuedPacket.Address, dataPacket, dequeuedPacket.Data)
 		if err != nil {
 			log.Println("Error while handling UDP packet: " + err.Error())
 			continue
@@ -112,8 +112,11 @@ func handleIncomingUdpData() {
 	}
 }
 
-func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket) error {
-	log.Println(clientPacket)
+func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, packetData []byte) error {
+	//log.Println(clientPacket)
+
+	log.Println(string(packetData))
+
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
 		if user, ok := globals.PlayerList[clientPacket.PlayerID]; ok {
 			user.UdpAddress = userAddress
@@ -127,6 +130,40 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket) e
 	}
 
 	switch clientPacket.Type {
+
+	/*
+		InitUser       = iota + 1 // TCP
+		KilledPlayer              // TCP
+		GameInit                  // TCP
+		StartGame                 // TCP
+		DialAddr                  // UDP
+		UpdatePos                 // UDP
+		UpdateRotation            // UDP
+	*/
+
+	case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
+		currUser, err := initializePlayer([]byte(packetData))
+		if err != nil {
+			//SendErrorMsg(conn, "error while making a user: "+err.Error())
+			log.Println(err)
+			return err
+		} else {
+
+			//defer deInitializePlayer(currUser)
+
+			//TODO: defer notify all that player left
+			//TODO: notify player about all players in lobby
+			//TODO: notify all that player joined
+			currUser.UdpAddress = userAddress
+
+			globals.PlayerList[currUser.Id] = currUser
+
+			for i, obj := range globals.PlayerList {
+				fmt.Println(i, ")", obj)
+			}
+
+		}
+
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
 		var newPosition player.PlayerPosition
 		err := json.Unmarshal([]byte(dataPacket), &newPosition)
@@ -156,9 +193,10 @@ func updatePlayerPosition() {
 			for _, user := range globals.PlayerList {
 				//TODO send name or id as well
 				//BUG where only one recieves
-				BroadcastUDP(user.PlayerPosition, packet.PositionBroadcast, []int{user.Id})
+				BroadcastUDP(user, packet.PositionBroadcast, []int{user.Id})
 			}
 		}
+		//log.Println("Loop position")
 		time.Sleep(500 * time.Millisecond)
 	}
 }
@@ -176,3 +214,105 @@ func BroadcastUDP(data interface{}, packetType int8, userFilter []int) error {
 	}
 	return nil
 }
+
+func initializePlayer(data []byte /*, tcpConnection net.Conn*/) (*player.Player, error) {
+	globals.PlayerListLock.Lock()
+	defer globals.PlayerListLock.Unlock()
+
+	var newPlayer *player.Player
+
+	type Tdata struct {
+		Type int8           `json:"type"`
+		Data *player.Player `json:"data"`
+	}
+	var dataobj Tdata
+
+	log.Println("===========", string(data))
+
+	err := json.Unmarshal(data, &dataobj)
+	if err != nil {
+		log.Println("Cant parse json init player data!")
+		return nil, err
+	}
+
+	newPlayer = dataobj.Data
+
+	log.Println("===========", newPlayer)
+
+	//newPlayer.TcpConnection = tcpConnection // Set the player TCP connection socket
+
+	// check if the name is taken or invalid
+	// we need to keep a counter so the name will be in the format `<name> <count>`
+	var newNameCount int8
+	var nameOk bool
+	oldName := newPlayer.Name
+
+	for !nameOk {
+		nameOk = true
+		for _, player := range globals.PlayerList {
+			if player.Name == newPlayer.Name {
+				newNameCount++
+				nameOk = false
+				newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
+				break
+			}
+		}
+	}
+
+	if newNameCount == 0 {
+		newPlayer.Name = oldName
+	}
+
+	// check if the color is taken or invalid, if it is assign next not taken color
+	if int8(0) > newPlayer.Color || int8(len(globals.Colors)) <= newPlayer.Color || globals.Colors[newPlayer.Color] {
+		for index, color := range globals.Colors {
+			if !color {
+				newPlayer.Color = int8(index)
+				break
+			}
+		}
+	}
+
+	globals.Colors[newPlayer.Color] = true // set player color as taken
+
+	// check if he is the first one in the lobby, if true set the player to be the game manager
+	if len(globals.PlayerList) == 0 {
+		newPlayer.IsManager = true
+	}
+
+	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
+	newPlayer.Id = globals.CurrId
+	globals.CurrId++
+
+	// set player spawn position
+	newPlayer.PlayerPosition = globals.SpawnPositionsStack[len(globals.SpawnPositionsStack)-1]   // peek at the last element
+	globals.SpawnPositionsStack = globals.SpawnPositionsStack[:len(globals.SpawnPositionsStack)] // pop
+
+	log.Println("New player got generated:")
+	utils.PrintUser(newPlayer)
+
+	return newPlayer, nil
+}
+
+func deInitializePlayer(playerToDelete *player.Player) error {
+	globals.PlayerListLock.Lock()
+	defer globals.PlayerListLock.Unlock()
+
+	delete(globals.PlayerList, playerToDelete.Id)
+
+	// give another player the manager
+	if playerToDelete.IsManager {
+		for _, nextPlayer := range globals.PlayerList {
+			nextPlayer.IsManager = true
+			break
+		}
+	}
+
+	// free the color
+	globals.Colors[playerToDelete.Color] = false
+
+	playerToDelete = nil
+
+	return nil
+}
+
