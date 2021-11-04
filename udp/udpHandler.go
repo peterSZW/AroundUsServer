@@ -150,10 +150,10 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 		} else {
 
 			//defer deInitializePlayer(currUser)
-
 			//TODO: defer notify all that player left
 			//TODO: notify player about all players in lobby
 			//TODO: notify all that player joined
+
 			currUser.UdpAddress = userAddress
 
 			globals.PlayerList[currUser.Id] = currUser
@@ -315,4 +315,3 @@ func deInitializePlayer(playerToDelete *player.Player) error {
 
 	return nil
 }
-

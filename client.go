@@ -44,7 +44,7 @@ func client() {
 	var user player.Player
 	user.UdpAddress = &net.UDPAddr{
 		IP:   net.IPv4(127, 0, 0, 1),
-		Port: 27403,
+		Port: 7403,
 	}
 
 	for {
@@ -116,4 +116,3 @@ func client() {
 	}
 
 }
-

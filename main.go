@@ -25,7 +25,7 @@ func main() {
 
 	// get program flags
 	var host = flag.String("ip", "127.0.0.1", "Server listen IP")
-	var port = flag.Int("port", 27403, "Server listen port")
+	var port = flag.Int("port", 7403, "Server listen port")
 	var isclient = flag.Bool("client", false, "client")
 	flag.Parse()
 
