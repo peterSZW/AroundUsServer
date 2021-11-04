@@ -142,26 +142,33 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 	*/
 
 	case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
-		currUser, err := initializePlayer([]byte(packetData))
-		if err != nil {
-			//SendErrorMsg(conn, "error while making a user: "+err.Error())
-			log.Println(err)
-			return err
-		} else {
 
-			//defer deInitializePlayer(currUser)
-			//TODO: defer notify all that player left
-			//TODO: notify player about all players in lobby
-			//TODO: notify all that player joined
+		player, err := UnmarshalUser([]byte(packetData))
+		if err == nil {
 
-			currUser.UdpAddress = userAddress
+			currUser := initializePlayer(player)
 
-			globals.PlayerList[currUser.Id] = currUser
+			{
 
-			for i, obj := range globals.PlayerList {
-				fmt.Println(i, ")", obj)
+				//defer deInitializePlayer(currUser)
+				//TODO: defer notify all that player left
+				//TODO: notify player about all players in lobby
+				//TODO: notify all that player joined
+
+				currUser.UdpAddress = userAddress
+
+				globals.PlayerListLock.Lock()
+
+				globals.PlayerList[currUser.Id] = currUser
+				globals.PlayerListLock.Unlock()
+
+				for i, obj := range globals.PlayerList {
+					fmt.Println(i, "-", obj)
+				}
+
 			}
-
+		} else {
+			log.Println(err)
 		}
 
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
@@ -187,12 +194,14 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 
 	return nil
 }
+
 func updatePlayerPosition() {
 	for {
 		if len(globals.PlayerList) > 1 {
 			for _, user := range globals.PlayerList {
 				//TODO send name or id as well
 				//BUG where only one recieves
+				fmt.Println(user)
 				BroadcastUDP(user, packet.PositionBroadcast, []int{user.Id})
 			}
 		}
@@ -215,27 +224,24 @@ func BroadcastUDP(data interface{}, packetType int8, userFilter []int) error {
 	return nil
 }
 
-func initializePlayer(data []byte /*, tcpConnection net.Conn*/) (*player.Player, error) {
-	globals.PlayerListLock.Lock()
-	defer globals.PlayerListLock.Unlock()
-
-	var newPlayer *player.Player
-
+func UnmarshalUser(data []byte) (*player.Player, error) {
 	type Tdata struct {
 		Type int8           `json:"type"`
+		Seq  int64          `json:"seq"`
 		Data *player.Player `json:"data"`
 	}
 	var dataobj Tdata
-
-	log.Println("===========", string(data))
 
 	err := json.Unmarshal(data, &dataobj)
 	if err != nil {
 		log.Println("Cant parse json init player data!")
 		return nil, err
 	}
+	return dataobj.Data, nil
 
-	newPlayer = dataobj.Data
+}
+
+func initializePlayer(newPlayer *player.Player) *player.Player {
 
 	log.Println("===========", newPlayer)
 
@@ -243,6 +249,7 @@ func initializePlayer(data []byte /*, tcpConnection net.Conn*/) (*player.Player,
 
 	// check if the name is taken or invalid
 	// we need to keep a counter so the name will be in the format `<name> <count>`
+
 	var newNameCount int8
 	var nameOk bool
 	oldName := newPlayer.Name
@@ -291,7 +298,7 @@ func initializePlayer(data []byte /*, tcpConnection net.Conn*/) (*player.Player,
 	log.Println("New player got generated:")
 	utils.PrintUser(newPlayer)
 
-	return newPlayer, nil
+	return newPlayer
 }
 
 func deInitializePlayer(playerToDelete *player.Player) error {

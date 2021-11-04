@@ -15,6 +15,7 @@ import (
 
 func getIncomingClientUdp(udpConnection *net.UDPConn) {
 	err := error(nil)
+	fmt.Println("Client listen....")
 
 	for err == nil {
 		buffer := make([]byte, 1024)

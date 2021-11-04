@@ -34,11 +34,13 @@ const (
 type ClientPacket struct {
 	PlayerID int                    `json:"playerID"`
 	Type     int8                   `json:"type"`
+	Seq      int64                  `json:"seq"`
 	Data     map[string]interface{} `json:"data"`
 }
 
 type ServerPacket struct {
 	Type int8        `json:"type"`
+	Seq  int64       `json:"seq"`
 	Data interface{} `json:"data"`
 }
 
@@ -59,8 +61,11 @@ func (dataPacket *ClientPacket) DataToBytes() ([]byte, error) {
 	return []byte(jsonString), nil
 }
 
+var seq int64
+
 func StampPacket(data interface{}, packetType int8) ServerPacket {
-	return ServerPacket{Type: packetType, Data: data}
+	seq++
+	return ServerPacket{Type: packetType, Seq: seq, Data: data}
 }
 
 func (packet *ServerPacket) SendTcpStream(tcpConnection net.Conn) (int, error) {
