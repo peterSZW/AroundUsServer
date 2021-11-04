@@ -42,10 +42,12 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 func client() {
 
 	var user player.Player
-	user.UdpAddress = &net.UDPAddr{
-		IP:   net.IPv4(127, 0, 0, 1),
-		Port: 7403,
-	}
+	udpAddr, _ := net.ResolveUDPAddr("udp4", *host+":"+strconv.Itoa(*port))
+	// user.UdpAddress = &net.UDPAddr{
+	// 	IP:   net.IPv4(127, 0, 0, 1),
+	// 	Port: 7403,
+	// }
+	user.UdpAddress = udpAddr
 
 	for {
 

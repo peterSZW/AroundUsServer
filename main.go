@@ -20,12 +20,15 @@ If you use this server in the wild, cheating & crashing will be SO ez.
 The unity game client I built wont be released as I respect the developers of "Among Us".
 */
 
+var host *string
+var port *int
+
 func main() {
 	// init variables
 
 	// get program flags
-	var host = flag.String("ip", "127.0.0.1", "Server listen IP")
-	var port = flag.Int("port", 7403, "Server listen port")
+	host = flag.String("ip", "127.0.0.1", "Server listen IP")
+	port = flag.Int("port", 7403, "Server listen port")
 	var isclient = flag.Bool("client", false, "client")
 	flag.Parse()
 
