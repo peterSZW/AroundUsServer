@@ -6,8 +6,8 @@ import (
 	"net"
 )
 
-// Client -> Server packets
 const (
+	// Client -> Server packets
 	InitUser       = iota + 1 // TCP
 	KilledPlayer              // TCP
 	GameInit                  // TCP
@@ -15,20 +15,17 @@ const (
 	DialAddr                  // UDP
 	UpdatePos                 // UDP
 	UpdateRotation            // UDP
-)
-
-// Server -> Client packets
-const (
-	UsersInGame         = iota + 1 // TCP
-	IsUserManager                  // TCP
-	NewPlayerConnected             // TCP
-	ClientSpawnPosition            // TCP
-	UserDisconnected               // TCP
-	GameOver                       // TCP
-	PlayerDied                     // TCP
-	UserId                         // TCP
-	Error                          // TCP
-	PositionBroadcast              // UDP
+	// Server -> Client packets
+	UsersInGame         // TCP
+	IsUserManager       // TCP
+	NewPlayerConnected  // TCP
+	ClientSpawnPosition // TCP
+	UserDisconnected    // TCP
+	GameOver            // TCP
+	PlayerDied          // TCP
+	UserId              // TCP
+	Error               // TCP
+	PositionBroadcast   // UDP
 )
 
 type ClientPacket struct {

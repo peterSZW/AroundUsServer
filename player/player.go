@@ -1,6 +1,18 @@
 package player
 
-import "net"
+import (
+	"aroundUsServer/globals"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"sync"
+)
+
+var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
+
+var PlayerList = make(map[int]*Player, 10) // holds the players, maximum 10
+var PlayerListLock sync.Mutex
 
 type Player struct {
 	Id             int            `json:"id"`             // Id of the player
@@ -26,4 +38,96 @@ type PlayerPosition struct {
 type PlayerRotation struct {
 	Pitch float32 `json:"rotation"`
 	Yaw   float32 `json:"yaw"`
+}
+
+func (newPlayer *Player) InitializePlayer() *Player {
+
+	log.Println("===========", newPlayer)
+
+	//newPlayer.TcpConnection = tcpConnection // Set the player TCP connection socket
+
+	// check if the name is taken or invalid
+	// we need to keep a counter so the name will be in the format `<name> <count>`
+
+	var newNameCount int8
+	var nameOk bool
+	oldName := newPlayer.Name
+
+	for !nameOk {
+		nameOk = true
+		for _, player := range PlayerList {
+			if player.Name == newPlayer.Name {
+				newNameCount++
+				nameOk = false
+				newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
+				break
+			}
+		}
+	}
+
+	if newNameCount == 0 {
+		newPlayer.Name = oldName
+	}
+
+	// check if the color is taken or invalid, if it is assign next not taken color
+	if int8(0) > newPlayer.Color || int8(len(globals.Colors)) <= newPlayer.Color || globals.Colors[newPlayer.Color] {
+		for index, color := range globals.Colors {
+			if !color {
+				newPlayer.Color = int8(index)
+				break
+			}
+		}
+	}
+
+	globals.Colors[newPlayer.Color] = true // set player color as taken
+
+	// check if he is the first one in the lobby, if true set the player to be the game manager
+	if len(PlayerList) == 0 {
+		newPlayer.IsManager = true
+	}
+
+	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
+	newPlayer.Id = globals.CurrId
+	globals.CurrId++
+
+	// set player spawn position
+	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
+	SpawnPositionsStack = SpawnPositionsStack[:len(SpawnPositionsStack)]       // pop
+
+	log.Println("New player got generated:")
+	newPlayer.PrintUser()
+
+	return newPlayer
+}
+
+func (playerToDelete *Player) DeInitializePlayer() error {
+	PlayerListLock.Lock()
+	defer PlayerListLock.Unlock()
+
+	delete(PlayerList, playerToDelete.Id)
+
+	// give another player the manager
+	if playerToDelete.IsManager {
+		for _, nextPlayer := range PlayerList {
+			nextPlayer.IsManager = true
+			break
+		}
+	}
+
+	// free the color
+	globals.Colors[playerToDelete.Color] = false
+
+	playerToDelete = nil
+
+	return nil
+}
+
+func (user *Player) PrintUser() {
+	//p, err := json.MarshalIndent(user, "", " ")
+	p, err := json.Marshal(user)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("%s \n", p)
 }

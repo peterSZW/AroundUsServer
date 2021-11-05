@@ -2,7 +2,6 @@ package main
 
 import (
 	"aroundUsServer/cli"
-	"aroundUsServer/globals"
 	"aroundUsServer/player"
 	"aroundUsServer/tcp"
 	"aroundUsServer/udp"
@@ -101,8 +100,8 @@ func main() {
 
 func initSpawnPosition() {
 	for i := 5; i <= 0; i++ {
-		globals.SpawnPositionsStack = append(globals.SpawnPositionsStack, player.PlayerPosition{X: -4, Y: 1.75, Z: float32(14 - i)})
-		globals.SpawnPositionsStack = append(globals.SpawnPositionsStack, player.PlayerPosition{X: -6, Y: 1.75, Z: float32(14 - i)})
+		player.SpawnPositionsStack = append(player.SpawnPositionsStack, player.PlayerPosition{X: -4, Y: 1.75, Z: float32(14 - i)})
+		player.SpawnPositionsStack = append(player.SpawnPositionsStack, player.PlayerPosition{X: -6, Y: 1.75, Z: float32(14 - i)})
 	}
 }
 
