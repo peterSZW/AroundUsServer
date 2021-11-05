@@ -1,7 +1,6 @@
 package player
 
 import (
-	"aroundUsServer/globals"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -13,7 +12,8 @@ var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players
 
 var PlayerList = make(map[int]*Player, 10) // holds the players, maximum 10
 var PlayerListLock sync.Mutex
-
+var Colors [12]bool // holds the colors, index indicated the color and the value if its taken or not
+var CurrId int      // the next player id when joining
 type Player struct {
 	Id             int            `json:"id"`             // Id of the player
 	Name           string         `json:"name"`           // The name of the player, can contain anything
@@ -70,8 +70,8 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	}
 
 	// check if the color is taken or invalid, if it is assign next not taken color
-	if int8(0) > newPlayer.Color || int8(len(globals.Colors)) <= newPlayer.Color || globals.Colors[newPlayer.Color] {
-		for index, color := range globals.Colors {
+	if int8(0) > newPlayer.Color || int8(len(Colors)) <= newPlayer.Color || Colors[newPlayer.Color] {
+		for index, color := range Colors {
 			if !color {
 				newPlayer.Color = int8(index)
 				break
@@ -79,7 +79,7 @@ func (newPlayer *Player) InitializePlayer() *Player {
 		}
 	}
 
-	globals.Colors[newPlayer.Color] = true // set player color as taken
+	Colors[newPlayer.Color] = true // set player color as taken
 
 	// check if he is the first one in the lobby, if true set the player to be the game manager
 	if len(PlayerList) == 0 {
@@ -87,8 +87,8 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	}
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
-	newPlayer.Id = globals.CurrId
-	globals.CurrId++
+	newPlayer.Id = CurrId
+	CurrId++
 
 	// set player spawn position
 	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
@@ -115,7 +115,7 @@ func (playerToDelete *Player) DeInitializePlayer() error {
 	}
 
 	// free the color
-	globals.Colors[playerToDelete.Color] = false
+	Colors[playerToDelete.Color] = false
 
 	playerToDelete = nil
 

@@ -190,7 +190,11 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 		if err != nil {
 			return fmt.Errorf("cant parse position player data")
 		}
-		player.PlayerList[clientPacket.PlayerID].PlayerPosition = newPosition
+		playee := player.PlayerList[clientPacket.PlayerID]
+		if playee != nil {
+			playee.PlayerPosition = newPosition
+		}
+		//player.PlayerList[clientPacket.PlayerID].PlayerPosition = newPosition
 	case packet.UpdateRotation: // {"type":7, "id": 0, "data":{"pitch":42, "yaw":11}}
 		var newRotation player.PlayerRotation
 		_ = json.Unmarshal([]byte(dataPacket), &newRotation)
