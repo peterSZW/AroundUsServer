@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 
 	"log"
@@ -71,10 +70,11 @@ func client() {
 func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 	for {
-		var command string
-		fmt.Scanln(&command)
-		commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
-		switch commands[0] {
+		var command, parameter string
+		fmt.Scanln(&command, &parameter)
+		//commands := strings.Split(strings.Trim(command, "\n\t/\\'\""), " ")
+		//fmt.Println(command, "|", commands)
+		switch command {
 		case "help", "h":
 			log.Println("help(h)")
 			log.Println("login(lg)")
@@ -117,9 +117,17 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 				log.Println(err)
 			}
 		case "disconnet", "dc":
-			_, err := strconv.Atoi(commands[1])
+			i, err := strconv.Atoi(parameter)
 			if err != nil {
-				log.Println("Cant convert to number position")
+				log.Println(err.Error() + "Cant convert to number position")
+			}
+
+			user := player.Player{Id: i}
+			packetToSend := packet.StampPacket(user, packet.UserDisconnected)
+
+			_, err = packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log.Println(err)
 			}
 		default:
 			log.Println("Unknown command")

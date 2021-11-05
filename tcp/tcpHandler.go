@@ -102,7 +102,7 @@ func handleTcpPlayer(conn net.Conn) {
 			//TODO: notify player about all players in lobby
 			//TODO: notify all that player joined
 
-			globals.PlayerList[currUser.Id] = currUser
+			player.PlayerList[currUser.Id] = currUser
 
 			// conenctedUsersJSON, err := json.Marshal(playerList) // Get all the players before adding the current user
 			// if err != nil {
@@ -180,8 +180,8 @@ func handleTcpPlayer(conn net.Conn) {
 }
 
 func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, error) {
-	globals.PlayerListLock.Lock()
-	defer globals.PlayerListLock.Unlock()
+	player.PlayerListLock.Lock()
+	defer player.PlayerListLock.Unlock()
 
 	var newPlayer *player.Player
 	err := json.Unmarshal(data, &newPlayer)
@@ -200,7 +200,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 
 	for !nameOk {
 		nameOk = true
-		for _, player := range globals.PlayerList {
+		for _, player := range player.PlayerList {
 			if player.Name == newPlayer.Name {
 				newNameCount++
 				nameOk = false
@@ -227,7 +227,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	globals.Colors[newPlayer.Color] = true // set player color as taken
 
 	// check if he is the first one in the lobby, if true set the player to be the game manager
-	if len(globals.PlayerList) == 0 {
+	if len(player.PlayerList) == 0 {
 		newPlayer.IsManager = true
 	}
 
@@ -236,24 +236,24 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	globals.CurrId++
 
 	// set player spawn position
-	newPlayer.PlayerPosition = globals.SpawnPositionsStack[len(globals.SpawnPositionsStack)-1]   // peek at the last element
-	globals.SpawnPositionsStack = globals.SpawnPositionsStack[:len(globals.SpawnPositionsStack)] // pop
+	newPlayer.PlayerPosition = player.SpawnPositionsStack[len(player.SpawnPositionsStack)-1]  // peek at the last element
+	player.SpawnPositionsStack = player.SpawnPositionsStack[:len(player.SpawnPositionsStack)] // pop
 
 	log.Println("New player got generated:")
-	utils.PrintUser(newPlayer)
+	newPlayer.PrintUser()
 
 	return newPlayer, nil
 }
 
 func deInitializePlayer(playerToDelete *player.Player) error {
-	globals.PlayerListLock.Lock()
-	defer globals.PlayerListLock.Unlock()
+	player.PlayerListLock.Lock()
+	defer player.PlayerListLock.Unlock()
 
-	delete(globals.PlayerList, playerToDelete.Id)
+	delete(player.PlayerList, playerToDelete.Id)
 
 	// give another player the manager
 	if playerToDelete.IsManager {
-		for _, nextPlayer := range globals.PlayerList {
+		for _, nextPlayer := range player.PlayerList {
 			nextPlayer.IsManager = true
 			break
 		}
@@ -276,7 +276,7 @@ func SendErrorMsg(conn net.Conn, msg string) error {
 
 // function wont send the message for players in the filter
 func BroadcastTCP(data []byte, packetType int8, userFilter []int) error {
-	for _, user := range globals.PlayerList {
+	for _, user := range player.PlayerList {
 		if !utils.IntInArray(user.Id, userFilter) {
 			log.Println("Sending data to everyone(Filtered) " + string(data))
 			packetToSend := packet.StampPacket(data, packetType)
