@@ -215,8 +215,8 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	}
 
 	// check if the color is taken or invalid, if it is assign next not taken color
-	if int8(0) > newPlayer.Color || int8(len(globals.Colors)) <= newPlayer.Color || globals.Colors[newPlayer.Color] {
-		for index, color := range globals.Colors {
+	if int8(0) > newPlayer.Color || int8(len(player.Colors)) <= newPlayer.Color || player.Colors[newPlayer.Color] {
+		for index, color := range player.Colors {
 			if !color {
 				newPlayer.Color = int8(index)
 				break
@@ -224,7 +224,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 		}
 	}
 
-	globals.Colors[newPlayer.Color] = true // set player color as taken
+	player.Colors[newPlayer.Color] = true // set player color as taken
 
 	// check if he is the first one in the lobby, if true set the player to be the game manager
 	if len(player.PlayerList) == 0 {
@@ -232,8 +232,8 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	}
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
-	newPlayer.Id = globals.CurrId
-	globals.CurrId++
+	newPlayer.Id = player.CurrId
+	player.CurrId++
 
 	// set player spawn position
 	newPlayer.PlayerPosition = player.SpawnPositionsStack[len(player.SpawnPositionsStack)-1]  // peek at the last element
@@ -260,7 +260,7 @@ func deInitializePlayer(playerToDelete *player.Player) error {
 	}
 
 	// free the color
-	globals.Colors[playerToDelete.Color] = false
+	player.Colors[playerToDelete.Color] = false
 
 	playerToDelete = nil
 
