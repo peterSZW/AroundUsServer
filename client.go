@@ -80,7 +80,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			log.Println("login(lg)")
 			log.Println("disconnet(dc) [id]")
 		case "login", "lg":
-			packetToSend := packet.StampPacket(user, packet.DialAddr)
+			packetToSend := packet.StampPacket("uuid", user, packet.DialAddr)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -89,8 +89,8 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 		case "init", "it", "1":
 			user.Name = "peter"
 			user.Color = 1
-			user.Id = 1
-			packetToSend := packet.StampPacket(user, packet.InitUser)
+			user.Uuid = "1"
+			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -99,8 +99,8 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 		case "2":
 			user.Name = "leo"
 			user.Color = 2
-			user.Id = 2
-			packetToSend := packet.StampPacket(user, packet.InitUser)
+			user.Uuid = "2"
+			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -109,23 +109,23 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 		case "3":
 			user.Name = "alex"
 			user.Color = 3
-			user.Id = 3
-			packetToSend := packet.StampPacket(user, packet.InitUser)
+			user.Uuid = "3"
+			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
 				log.Println(err)
 			}
 		case "disconnet", "dc":
-			i, err := strconv.Atoi(parameter)
-			if err != nil {
-				log.Println(err.Error() + "Cant convert to number position")
-			}
+			// i, err := strconv.Atoi(parameter)
+			// if err != nil {
+			// 	log.Println(err.Error() + "Cant convert to number position")
+			// }
 
-			user := player.Player{Id: i}
-			packetToSend := packet.StampPacket(user, packet.UserDisconnected)
+			user := player.Player{Uuid: parameter}
+			packetToSend := packet.StampPacket("uuid", user, packet.UserDisconnected)
 
-			_, err = packetToSend.SendUdpStream2(udpConnection)
+			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
 				log.Println(err)
 			}

@@ -29,16 +29,24 @@ const (
 	PositionBroadcast   // UDP
 )
 
+type ClientPacketRaw struct {
+	Type int8        `json:"type"`
+	Seq  int64       `json:"seq"`
+	Uuid string      `json:"uuid"`
+	Data interface{} `json:"data"`
+}
+
 type ClientPacket struct {
-	PlayerID int                    `json:"playerID"`
-	Type     int8                   `json:"type"`
-	Seq      int64                  `json:"seq"`
-	Data     map[string]interface{} `json:"data"`
+	Uuid string                 `json:"uuid"`
+	Type int8                   `json:"type"`
+	Seq  int64                  `json:"seq"`
+	Data map[string]interface{} `json:"data"`
 }
 
 type ServerPacket struct {
 	Type int8        `json:"type"`
 	Seq  int64       `json:"seq"`
+	Uuid string      `json:"uuid"`
 	Data interface{} `json:"data"`
 }
 
@@ -61,9 +69,10 @@ func (dataPacket *ClientPacket) DataToBytes() ([]byte, error) {
 
 var seq int64
 
-func StampPacket(data interface{}, packetType int8) ServerPacket {
+func StampPacket(uuid string, data interface{}, packetType int8) ServerPacket {
 	seq++
-	return ServerPacket{Type: packetType, Seq: seq, Data: data}
+	return ServerPacket{Uuid: uuid, Type: packetType, Seq: seq, Data: data}
+	//ServerPacket{}
 }
 
 func (packet *ServerPacket) SendTcpStream(tcpConnection net.Conn) (int, error) {

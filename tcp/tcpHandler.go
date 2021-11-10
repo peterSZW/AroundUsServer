@@ -102,7 +102,7 @@ func handleTcpPlayer(conn net.Conn) {
 			//TODO: notify player about all players in lobby
 			//TODO: notify all that player joined
 
-			player.PlayerList[currUser.Id] = currUser
+			player.PlayerList[currUser.Uuid] = currUser
 
 			// conenctedUsersJSON, err := json.Marshal(playerList) // Get all the players before adding the current user
 			// if err != nil {
@@ -232,14 +232,14 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	}
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
-	newPlayer.Id = player.CurrId
+	newPlayer.Uuid = strconv.Itoa(player.CurrId)
 	player.CurrId++
 
 	// set player spawn position
 	newPlayer.PlayerPosition = player.SpawnPositionsStack[len(player.SpawnPositionsStack)-1]  // peek at the last element
 	player.SpawnPositionsStack = player.SpawnPositionsStack[:len(player.SpawnPositionsStack)] // pop
 
-	log.Println("New player got generated:")
+	log.Print("New player got generated:")
 	newPlayer.PrintUser()
 
 	return newPlayer, nil
@@ -249,7 +249,7 @@ func deInitializePlayer(playerToDelete *player.Player) error {
 	player.PlayerListLock.Lock()
 	defer player.PlayerListLock.Unlock()
 
-	delete(player.PlayerList, playerToDelete.Id)
+	delete(player.PlayerList, playerToDelete.Uuid)
 
 	// give another player the manager
 	if playerToDelete.IsManager {
@@ -269,17 +269,17 @@ func deInitializePlayer(playerToDelete *player.Player) error {
 
 func SendErrorMsg(conn net.Conn, msg string) error {
 	log.Println(msg)
-	errorPacket := packet.StampPacket([]byte(msg), packet.Error)
+	errorPacket := packet.StampPacket("", []byte(msg), packet.Error)
 	_, err := errorPacket.SendTcpStream(conn)
 	return err
 }
 
 // function wont send the message for players in the filter
-func BroadcastTCP(data []byte, packetType int8, userFilter []int) error {
+func BroadcastTCP(data []byte, packetType int8, userFilter []string) error {
 	for _, user := range player.PlayerList {
-		if !utils.IntInArray(user.Id, userFilter) {
+		if !utils.IntInArray(user.Uuid, userFilter) {
 			log.Println("Sending data to everyone(Filtered) " + string(data))
-			packetToSend := packet.StampPacket(data, packetType)
+			packetToSend := packet.StampPacket("", data, packetType)
 			_, err := packetToSend.SendTcpStream(user.TcpConnection)
 			if err != nil {
 				log.Println(err)

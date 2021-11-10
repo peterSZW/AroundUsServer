@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"sync"
 )
 
 var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
 
-var PlayerList = make(map[int]*Player, 10) // holds the players, maximum 10
+var PlayerList = make(map[string]*Player, 10) // holds the players, maximum 10
 var PlayerListLock sync.Mutex
 var Colors [12]bool // holds the colors, index indicated the color and the value if its taken or not
 var CurrId int      // the next player id when joining
 type Player struct {
-	Id             int            `json:"id"`             // Id of the player
+	Uuid           string         `json:"uuid"`           // Id of the player
 	Name           string         `json:"name"`           // The name of the player, can contain anything
 	Color          int8           `json:"color"`          // The index of the color in the color list held in the client
 	IsManager      bool           `json:"-"`              // Whether the player is the game manager or not, he can start the game
@@ -42,7 +43,7 @@ type PlayerRotation struct {
 
 func (newPlayer *Player) InitializePlayer() *Player {
 
-	log.Println("===========", newPlayer)
+	log.Println("====init=======", newPlayer)
 
 	//newPlayer.TcpConnection = tcpConnection // Set the player TCP connection socket
 
@@ -87,14 +88,14 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	}
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
-	newPlayer.Id = CurrId
+	newPlayer.Uuid = strconv.Itoa(CurrId)
 	CurrId++
 
 	// set player spawn position
 	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
 	SpawnPositionsStack = SpawnPositionsStack[:len(SpawnPositionsStack)]       // pop
 
-	log.Println("New player got generated:")
+	log.Print("New player got generated:")
 	newPlayer.PrintUser()
 
 	return newPlayer
@@ -104,7 +105,7 @@ func (playerToDelete *Player) DeInitializePlayer() error {
 	PlayerListLock.Lock()
 	defer PlayerListLock.Unlock()
 
-	delete(PlayerList, playerToDelete.Id)
+	delete(PlayerList, playerToDelete.Uuid)
 
 	// give another player the manager
 	if playerToDelete.IsManager {

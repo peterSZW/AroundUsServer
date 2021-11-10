@@ -24,7 +24,6 @@ type udpPacket struct {
 }
 
 func ListenUDP(host string, port int) {
-	log.Println("Starting UDP listening")
 
 	packetsQueue = goconcurrentqueue.NewFIFO()
 
@@ -32,6 +31,7 @@ func ListenUDP(host string, port int) {
 	addresss := fmt.Sprintf("%s:%d", host, port)
 	protocol := "udp"
 
+	log.Println("Starting UDP listening", addresss)
 	//Build the address
 	udpAddr, err := net.ResolveUDPAddr(protocol, addresss)
 	if err != nil {
@@ -99,12 +99,14 @@ func handleIncomingUdpData() {
 			continue
 		}
 
-		var dataPacket packet.ClientPacket
+		var dataPacket packet.ClientPacketRaw
 		err = json.Unmarshal(dequeuedPacket.Data, &dataPacket)
 		if err != nil {
 			log.Println("Couldn't parse json player data! Skipping iteration!")
 			continue
 		}
+
+		//解码出来数据
 
 		err = handleUdpData(dequeuedPacket.Address, dataPacket, dequeuedPacket.Data)
 		if err != nil {
@@ -114,25 +116,25 @@ func handleIncomingUdpData() {
 	}
 }
 
-func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, packetData []byte) error {
+func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw, packetData []byte) error {
 	//log.Println(clientPacket)
 
-	log.Println(string(packetData))
+	log.Println("-<-", string(packetData))
 
 	// log.Println("#1#", clientPacket)
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
-		if user, ok := player.PlayerList[clientPacket.PlayerID]; ok {
+		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
 			user.UdpAddress = userAddress
 		}
 		return nil
 	}
 
 	// log.Println("#2#", clientPacket)
-	dataPacket, err := clientPacket.DataToBytes()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+	// dataPacket, err := clientPacket.DataToBytes()
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
 
 	switch clientPacket.Type {
 
@@ -164,7 +166,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 
 				player.PlayerListLock.Lock()
 
-				player.PlayerList[currUser.Id] = currUser
+				player.PlayerList[currUser.Uuid] = currUser
 				player.PlayerListLock.Unlock()
 
 				for i, obj := range player.PlayerList {
@@ -188,24 +190,24 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacket, p
 
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
 		var newPosition player.PlayerPosition
-		err := json.Unmarshal([]byte(dataPacket), &newPosition)
+		err := json.Unmarshal(packetData, &newPosition)
 		if err != nil {
 			return fmt.Errorf("cant parse position player data")
 		}
-		playee := player.PlayerList[clientPacket.PlayerID]
+		playee := player.PlayerList[clientPacket.Uuid]
 		if playee != nil {
 			playee.PlayerPosition = newPosition
 		}
-		//player.PlayerList[clientPacket.PlayerID].PlayerPosition = newPosition
+		//player.PlayerList[clientPacket.Uuid].PlayerPosition = newPosition
 	case packet.UpdateRotation: // {"type":7, "id": 0, "data":{"pitch":42, "yaw":11}}
 		var newRotation player.PlayerRotation
-		_ = json.Unmarshal([]byte(dataPacket), &newRotation)
+		err := json.Unmarshal(packetData, &newRotation)
 		if err != nil {
 			return fmt.Errorf("cant parse rotation player data")
 		}
-		player.PlayerList[clientPacket.PlayerID].Rotation = newRotation
+		player.PlayerList[clientPacket.Uuid].Rotation = newRotation
 	default:
-		if user, ok := player.PlayerList[clientPacket.PlayerID]; ok {
+		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
 			tcp.SendErrorMsg(user.TcpConnection, "Invalid UDP packet type!")
 		}
 
@@ -221,7 +223,7 @@ func updatePlayerPosition() {
 				//TODO send name or id as well
 				//BUG where only one recieves
 				fmt.Println(user)
-				BroadcastUDP(user, packet.PositionBroadcast, []int{user.Id})
+				BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
 			}
 		}
 		//log.Println("Loop position")
@@ -230,10 +232,10 @@ func updatePlayerPosition() {
 }
 
 // function wont send the message for players in the filter
-func BroadcastUDP(data interface{}, packetType int8, userFilter []int) error {
-	packetToSend := packet.StampPacket(data, packetType)
+func BroadcastUDP(data interface{}, packetType int8, userFilter []string) error {
+	packetToSend := packet.StampPacket("", data, packetType)
 	for _, user := range player.PlayerList {
-		if !utils.IntInArray(user.Id, userFilter) && user.UdpAddress != nil {
+		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
 			_, err := packetToSend.SendUdpStream(udpConnection, user.UdpAddress)
 			if err != nil {
 				log.Println(err)

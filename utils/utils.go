@@ -15,7 +15,7 @@ func GetBytes(key interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func IntInArray(needle int, hayStack []int) bool {
+func IntInArray(needle string, hayStack []string) bool {
 	for _, hay := range hayStack {
 		if hay == needle {
 			return true

@@ -3,7 +3,6 @@ package main
 import (
 	"aroundUsServer/cli"
 	"aroundUsServer/player"
-	"aroundUsServer/tcp"
 	"aroundUsServer/udp"
 	"flag"
 	"log"
@@ -26,7 +25,7 @@ func main() {
 	// init variables
 
 	// get program flags
-	host = flag.String("ip", "127.0.0.1", "Server listen IP")
+	host = flag.String("ip", "0.0.0.0", "Server listen IP")
 	port = flag.Int("port", 7403, "Server listen port")
 	var isclient = flag.Bool("client", false, "client")
 	flag.Parse()
@@ -37,11 +36,12 @@ func main() {
 		client()
 
 	} else {
-		initSpawnPosition()
-		log.Printf("Starting listening on: %s:%d", *host, *port)
 
+		initSpawnPosition()
+
+		go start_websocket_server()
 		// start listening
-		go tcp.ListenTCP(*host, *port)
+		//go tcp.ListenTCP(*host, *port)
 		go udp.ListenUDP(*host, *port)
 
 		// block main thread with the console
