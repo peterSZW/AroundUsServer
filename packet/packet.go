@@ -30,10 +30,10 @@ const (
 )
 
 type ClientPacketRaw struct {
-	Type int8        `json:"type"`
-	Seq  int64       `json:"seq"`
-	Uuid string      `json:"uuid"`
-	Data interface{} `json:"data"`
+	Type int8   `json:"type"`
+	Seq  int64  `json:"seq"`
+	Uuid string `json:"uuid"`
+	//Data interface{} `json:"data"`
 }
 
 type ClientPacket struct {

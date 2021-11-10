@@ -150,8 +150,19 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 
 	case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
 
-		player1, err := UnmarshalUser([]byte(packetData))
-		if err == nil {
+		type Tdata struct {
+			packet.ClientPacketRaw
+
+			Data *player.Player `json:"data"`
+		}
+		var dataobj Tdata
+
+		err := json.Unmarshal(packetData, &dataobj)
+		if err != nil {
+			log.Println("Cant parse json init player data!")
+		} else {
+			dataobj.Data.Uuid = dataobj.Uuid
+			player1 := dataobj.Data
 
 			currUser := player1.InitializePlayer()
 
@@ -170,12 +181,10 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 				player.PlayerListLock.Unlock()
 
 				for i, obj := range player.PlayerList {
-					fmt.Println(i, "-", obj)
+					fmt.Println("(", i, ")", obj)
 				}
 
 			}
-		} else {
-			log.Println(err)
 		}
 
 	case packet.UserDisconnected: // example: {"type":12, "data":{"name":"bro", "color": 1}}

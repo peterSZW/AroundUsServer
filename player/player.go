@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 	"sync"
 )
 
@@ -88,8 +87,9 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	}
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
-	newPlayer.Uuid = strconv.Itoa(CurrId)
-	CurrId++
+
+	//newPlayer.Uuid = strconv.Itoa(CurrId)
+	//CurrId++
 
 	// set player spawn position
 	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
