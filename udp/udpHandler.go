@@ -61,6 +61,8 @@ func ListenUDP(host string, port int) {
 		}
 		<-quit // hang until an error
 	}
+
+	//一个 getIncomingUdp()，多个 handleIncomingUdpData()
 }
 
 func getIncomingUdp(quit chan struct{}) {

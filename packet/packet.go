@@ -15,6 +15,7 @@ const (
 	DialAddr                  // UDP
 	UpdatePos                 // UDP
 	UpdateRotation            // UDP
+	HeartBeat                 // UDP
 	// Server -> Client packets
 	UsersInGame         // TCP
 	IsUserManager       // TCP
