@@ -5,7 +5,9 @@ import (
 	"aroundUsServer/player"
 	"aroundUsServer/udp"
 	"flag"
+	"io/ioutil"
 	"log"
+	"strings"
 )
 
 /*
@@ -20,6 +22,7 @@ The unity game client I built wont be released as I respect the developers of "A
 
 var host *string
 var port *int
+var userList map[string]string
 
 func main() {
 	// init variables
@@ -29,6 +32,13 @@ func main() {
 	port = flag.Int("port", 7403, "Server listen port")
 	var isclient = flag.Bool("client", false, "client")
 	flag.Parse()
+
+	data, err := ioutil.ReadFile("user.txt")
+	if err != nil {
+		log.Println(err)
+	}
+	userlist := string(data)
+	strings.Split(userlist, "\n")
 
 	if *isclient {
 		log.Printf("Starting client")
@@ -61,7 +71,7 @@ func main() {
 // }
 
 // func (p player.Player) unduplicateUsername() {
-// 	var nextNumber int8
+// 	var nextNumber int16
 // 	wasDuped := true
 // 	criticalUseLock.Lock()
 // 	for wasDuped {

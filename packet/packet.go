@@ -7,15 +7,16 @@ import (
 )
 
 const (
-	InitUser                      = iota + 1 // TCP// Client -> Server packets
-	DialAddr                                 // UDP
-	UpdatePos                                // UDP
-	UpdateRotation                           // UDP
-	PositionBroadcast                        // UDP
-	HeartBeat                                // UDP
-	UserDisconnected                         // TCP
-	UserId                                   // TCP
-	Error                                    // TCP
+	NewUser                       = iota + 1 // TCP// Client -> Server packets
+	GetUser                                  // TCP
+	Auth                                     // TCP
+	Disconnect                               // TCP
+	GetRooms                                 // TCP
+	GetRoomUsers                             // TCP
+	JoinRoom                                 // TCP
+	JoinNewRoom                              // TCP
+	LeaveRoom                                // TCP
+	Error                                    // tcp
 	GameLogic_UsersInGame                    // TCP// Server -> Client packets
 	GameLogic_IsUserManager                  // TCP
 	GameLogic_NewPlayerConnected             // TCP
@@ -26,9 +27,16 @@ const (
 	GameLogic_Init                           // TCP
 	GameLogic_StartGame                      // TCP
 )
+const (
+	DialAddr          = iota + 1000 // UDP
+	UpdatePos                       // UDP
+	UpdateRotation                  // UDP
+	PositionBroadcast               // UDP
+	HeartBeat                       // UDP
+)
 
 type ClientPacketRaw struct {
-	Type int8   `json:"type"`
+	Type int16  `json:"type"`
 	Seq  int64  `json:"seq"`
 	Uuid string `json:"uuid"`
 	//Data interface{} `json:"data"`
@@ -36,13 +44,13 @@ type ClientPacketRaw struct {
 
 type ClientPacket struct {
 	Uuid string                 `json:"uuid"`
-	Type int8                   `json:"type"`
+	Type int16                  `json:"type"`
 	Seq  int64                  `json:"seq"`
 	Data map[string]interface{} `json:"data"`
 }
 
 type ServerPacket struct {
-	Type int8        `json:"type"`
+	Type int16       `json:"type"`
 	Seq  int64       `json:"seq"`
 	Uuid string      `json:"uuid"`
 	Data interface{} `json:"data"`
@@ -50,10 +58,10 @@ type ServerPacket struct {
 
 type GameInitData struct {
 	Imposters    []string `json:"imposters"`
-	TaskCount    uint8    `json:"taskCount"`
-	PlayerSpeed  uint8    `json:"playerSpeed"`
-	KillCooldown uint8    `json:"killCooldown"`
-	Emergencies  uint8    `json:"emergencies"`
+	TaskCount    uint16   `json:"taskCount"`
+	PlayerSpeed  uint16   `json:"playerSpeed"`
+	KillCooldown uint16   `json:"killCooldown"`
+	Emergencies  uint16   `json:"emergencies"`
 }
 
 func (dataPacket *ClientPacket) DataToBytes() ([]byte, error) {
@@ -67,7 +75,7 @@ func (dataPacket *ClientPacket) DataToBytes() ([]byte, error) {
 
 var seq int64
 
-func StampPacket(uuid string, data interface{}, packetType int8) ServerPacket {
+func StampPacket(uuid string, data interface{}, packetType int16) ServerPacket {
 	seq++
 	return ServerPacket{Uuid: uuid, Type: packetType, Seq: seq, Data: data}
 	//ServerPacket{}

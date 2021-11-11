@@ -90,7 +90,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			user.Name = "peter"
 			user.Color = 1
 			user.Uuid = "1"
-			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
+			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -100,7 +100,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			user.Name = "leo"
 			user.Color = 2
 			user.Uuid = "2"
-			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
+			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -110,7 +110,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			user.Name = "alex"
 			user.Color = 3
 			user.Uuid = "3"
-			packetToSend := packet.StampPacket("uuid", user, packet.InitUser)
+			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
@@ -123,7 +123,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			// }
 
 			user := player.Player{Uuid: parameter}
-			packetToSend := packet.StampPacket("uuid", user, packet.UserDisconnected)
+			packetToSend := packet.StampPacket("uuid", user, packet.Disconnect)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {

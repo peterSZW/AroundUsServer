@@ -159,7 +159,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		PositionBroadcast              // UDP
 	*/
 
-	case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
+	case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
 
 		type TInitUser struct {
 			packet.ClientPacketRaw
@@ -197,7 +197,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 			}
 		}
 
-	case packet.UserDisconnected: // example: {"type":12, "data":{"name":"bro", "color": 1}}
+	case packet.Disconnect: // example: {"type":12, "data":{"name":"bro", "color": 1}}
 
 		player1, err := UnmarshalUser([]byte(packetData))
 		if err == nil {
@@ -251,7 +251,7 @@ func updatePlayerPosition() {
 }
 
 // function wont send the message for players in the filter
-func BroadcastUDP(data interface{}, packetType int8, userFilter []string) error {
+func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error {
 	packetToSend := packet.StampPacket("", data, packetType)
 	for _, user := range player.PlayerList {
 		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
@@ -266,7 +266,7 @@ func BroadcastUDP(data interface{}, packetType int8, userFilter []string) error 
 
 func UnmarshalUser(data []byte) (*player.Player, error) {
 	type Tdata struct {
-		Type int8           `json:"type"`
+		Type int16          `json:"type"`
 		Seq  int64          `json:"seq"`
 		Data *player.Player `json:"data"`
 	}

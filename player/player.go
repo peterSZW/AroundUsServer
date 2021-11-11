@@ -17,7 +17,7 @@ var CurrId int      // the next player id when joining
 type Player struct {
 	Uuid           string         `json:"uuid"`           // Id of the player
 	Name           string         `json:"name"`           // The name of the player, can contain anything
-	Color          int8           `json:"color"`          // The index of the color in the color list held in the client
+	Color          int16          `json:"color"`          // The index of the color in the color list held in the client
 	IsManager      bool           `json:"-"`              // Whether the player is the game manager or not, he can start the game
 	IsImposter     bool           `json:"isImposter"`     // Sent on the round start to tell the client if hes an imposter or crew
 	InVent         bool           `json:"inVent"`         // If true the server shouldnt send the player locations until hes leaving the vent
@@ -49,7 +49,7 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	// check if the name is taken or invalid
 	// we need to keep a counter so the name will be in the format `<name> <count>`
 
-	var newNameCount int8
+	var newNameCount int16
 	var nameOk bool
 	oldName := newPlayer.Name
 
@@ -70,10 +70,10 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	}
 
 	// check if the color is taken or invalid, if it is assign next not taken color
-	if int8(0) > newPlayer.Color || int8(len(Colors)) <= newPlayer.Color || Colors[newPlayer.Color] {
+	if int16(0) > newPlayer.Color || int16(len(Colors)) <= newPlayer.Color || Colors[newPlayer.Color] {
 		for index, color := range Colors {
 			if !color {
-				newPlayer.Color = int8(index)
+				newPlayer.Color = int16(index)
 				break
 			}
 		}

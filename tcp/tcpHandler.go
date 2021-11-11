@@ -88,7 +88,7 @@ func handleTcpPlayer(conn net.Conn) {
 		// log.Println(string(packetData))
 
 		switch clientPacket.Type {
-		case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
+		case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
 			currUser, err = initializePlayer([]byte(packetData), conn)
 			if err != nil {
 				SendErrorMsg(conn, "error while making a user: "+err.Error())
@@ -194,7 +194,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 
 	// check if the name is taken or invalid
 	// we need to keep a counter so the name will be in the format `<name> <count>`
-	var newNameCount int8
+	var newNameCount int16
 	var nameOk bool
 	oldName := newPlayer.Name
 
@@ -215,10 +215,10 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	}
 
 	// check if the color is taken or invalid, if it is assign next not taken color
-	if int8(0) > newPlayer.Color || int8(len(player.Colors)) <= newPlayer.Color || player.Colors[newPlayer.Color] {
+	if int16(0) > newPlayer.Color || int16(len(player.Colors)) <= newPlayer.Color || player.Colors[newPlayer.Color] {
 		for index, color := range player.Colors {
 			if !color {
-				newPlayer.Color = int8(index)
+				newPlayer.Color = int16(index)
 				break
 			}
 		}
@@ -275,7 +275,7 @@ func SendErrorMsg(conn net.Conn, msg string) error {
 }
 
 // function wont send the message for players in the filter
-func BroadcastTCP(data []byte, packetType int8, userFilter []string) error {
+func BroadcastTCP(data []byte, packetType int16, userFilter []string) error {
 	for _, user := range player.PlayerList {
 		if !utils.IntInArray(user.Uuid, userFilter) {
 			log.Println("Sending data to everyone(Filtered) " + string(data))
