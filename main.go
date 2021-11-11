@@ -39,13 +39,14 @@ func main() {
 
 		initSpawnPosition()
 
-		go start_websocket_server()
+		//go start_websocket_server()
+
 		// start listening
 		//go tcp.ListenTCP(*host, *port)
 		go udp.ListenUDP(*host, *port)
 
 		// block main thread with the console
-		cli.ConsoleCLI()
+		cli.ServerConsoleCLI()
 
 	}
 }

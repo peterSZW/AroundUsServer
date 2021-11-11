@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 )
 
-func ConsoleCLI() {
+func ServerConsoleCLI() {
 	for {
-		var command string
-		fmt.Scanln(&command)
-		commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
-		switch commands[0] {
+		// var command string
+		// fmt.Scanln(&command)
+		var command, parameter string
+		fmt.Scanln(&command, &parameter)
+
+		//commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
+		switch command {
 		case "help", "h":
 			log.Println("help(h)")
 			log.Println("list(ls)")
@@ -23,7 +25,7 @@ func ConsoleCLI() {
 				player1.PrintUser()
 			}
 		case "disconnet", "dc":
-			_, err := strconv.Atoi(commands[1])
+			_, err := strconv.Atoi(parameter)
 			if err != nil {
 				log.Println("Cant convert to number position")
 			}

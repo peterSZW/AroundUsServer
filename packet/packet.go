@@ -7,26 +7,24 @@ import (
 )
 
 const (
-	// Client -> Server packets
-	InitUser       = iota + 1 // TCP
-	KilledPlayer              // TCP
-	GameInit                  // TCP
-	StartGame                 // TCP
-	DialAddr                  // UDP
-	UpdatePos                 // UDP
-	UpdateRotation            // UDP
-	HeartBeat                 // UDP
-	// Server -> Client packets
-	UsersInGame         // TCP
-	IsUserManager       // TCP
-	NewPlayerConnected  // TCP
-	ClientSpawnPosition // TCP
-	UserDisconnected    // TCP
-	GameOver            // TCP
-	PlayerDied          // TCP
-	UserId              // TCP
-	Error               // TCP
-	PositionBroadcast   // UDP
+	InitUser               = iota + 1 // TCP// Client -> Server packets
+	DialAddr                          // UDP
+	UpdatePos                         // UDP
+	UpdateRotation                    // UDP
+	HeartBeat                         // UDP
+	UsersInGame                       // TCP// Server -> Client packets
+	IsUserManager                     // TCP
+	NewPlayerConnected                // TCP
+	ClientSpawnPosition               // TCP
+	UserDisconnected                  // TCP
+	GameOver                          // TCP
+	PlayerDied                        // TCP
+	UserId                            // TCP
+	Error                             // TCP
+	PositionBroadcast                 // UDP
+	GameLogic_KilledPlayer            // TCP
+	GameLogic_Init                    // TCP
+	GameLogic_StartGame               // TCP
 )
 
 type ClientPacketRaw struct {

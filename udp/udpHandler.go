@@ -139,25 +139,35 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 	switch clientPacket.Type {
 
 	/*
-		InitUser       = iota + 1 // TCP
-		KilledPlayer              // TCP
-		GameInit                  // TCP
-		StartGame                 // TCP
-		DialAddr                  // UDP
-		UpdatePos                 // UDP
-		UpdateRotation            // UDP
+		InitUser            = iota + 1 // TCP// Client -> Server packets
+		KilledPlayer                   // TCP
+		GameInit                       // TCP
+		StartGame                      // TCP
+		DialAddr                       // UDP
+		UpdatePos                      // UDP
+		UpdateRotation                 // UDP
+		HeartBeat                      // UDP
+		UsersInGame                    // TCP// Server -> Client packets
+		IsUserManager                  // TCP
+		NewPlayerConnected             // TCP
+		ClientSpawnPosition            // TCP
+		UserDisconnected               // TCP
+		GameOver                       // TCP
+		PlayerDied                     // TCP
+		UserId                         // TCP
+		Error                          // TCP
+		PositionBroadcast              // UDP
 	*/
 
 	case packet.InitUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
 
-		type Tdata struct {
+		type TInitUser struct {
 			packet.ClientPacketRaw
-
 			Data *player.Player `json:"data"`
 		}
-		var dataobj Tdata
-
+		var dataobj TInitUser
 		err := json.Unmarshal(packetData, &dataobj)
+
 		if err != nil {
 			log.Println("Cant parse json init player data!")
 		} else {
@@ -170,13 +180,13 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 
 				//defer deInitializePlayer(currUser)
 				//TODO: defer notify all that player left
+
 				//TODO: notify player about all players in lobby
 				//TODO: notify all that player joined
 
 				currUser.UdpAddress = userAddress
 
 				player.PlayerListLock.Lock()
-
 				player.PlayerList[currUser.Uuid] = currUser
 				player.PlayerListLock.Unlock()
 
