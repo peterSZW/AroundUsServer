@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"aroundUsServer/player"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -28,32 +29,125 @@ const (
 	GL_StartGame                      // TCP
 )
 
-type TBasePacket struct {
+type TBaseReqPacket struct {
 	Type  int16  `json:"type"`
 	Seq   int64  `json:"seq"`
 	Uuid  string `json:"uuid"`
 	Token string `json:"token"`
 }
 
+type TBaseRspPacket struct {
+	Code  int    `json:"code"`
+	Msg   string `json:"msg"`
+	MsgEx string `json:"msgex"`
+}
+
+//====
+
 type TNewUserReq struct {
-	TBasePacket
-	Phone string `json:"phone"`
-	Email string `json:"email"`
+	TBaseReqPacket
+	Phone string         `json:"phone"`
+	Email string         `json:"email"`
+	Data  *player.Player `json:"data"`
 }
 type TNewUserRsp struct {
-	TBasePacket
+	TBaseReqPacket
+	TBaseRspPacket
 	Phone string `json:"phone"`
 	Email string `json:"email"`
 }
 
 type TAuthReq struct {
-	TBasePacket
+	TBaseReqPacket
 	Phone string `json:"phone"`
 	Email string `json:"email"`
 	Pass  string `json:"pass"`
 }
 type TAuthRsp struct {
-	TBasePacket
+	TBaseReqPacket
+	TBaseRspPacket
+}
+
+type TDisconnectReq struct {
+	TBaseReqPacket
+}
+type TDisconnectRsp struct {
+	TBaseRspPacket
+}
+
+//===
+type TGetRoomsReq struct {
+	TBaseReqPacket
+}
+type TGetRoomsRsp struct {
+	TBaseRspPacket
+}
+
+//===
+type TGetRoomUsersReq struct {
+	TBaseReqPacket
+}
+type TGetRoomUsersRsp struct {
+	TBaseRspPacket
+}
+
+type TJoinRoomReq struct {
+	TBaseReqPacket
+}
+type TJoinRoomRsp struct {
+	TBaseRspPacket
+}
+
+type TJoinNewRoomReq struct {
+	TBaseReqPacket
+}
+type TJoinNewRoomRsp struct {
+	TBaseRspPacket
+}
+
+type TLeaveRoomReq struct {
+	TBaseReqPacket
+}
+type TLeaveRoomRsp struct {
+	TBaseRspPacket
+}
+
+type TDialAddrReq struct {
+	TBaseReqPacket
+}
+type TDialAddrRsp struct {
+	TBaseRspPacket
+}
+
+type TUpdatePosReq struct {
+	TBaseReqPacket
+	PP player.PlayerPosition
+}
+type TUpdatePosRsp struct {
+	TBaseRspPacket
+}
+
+type TUpdateRotationReq struct {
+	TBaseReqPacket
+	PP player.PlayerRotation
+}
+type TUpdateRotationRsp struct {
+	TBaseRspPacket
+}
+
+type TPositionBroadcastReq struct {
+	TBaseReqPacket
+	PP player.PlayerPosition
+}
+type TPositionBroadcastRsp struct {
+	TBaseRspPacket
+}
+
+type THeartBeatReq struct {
+	TBaseReqPacket
+}
+type THeartBeatRsp struct {
+	TBaseRspPacket
 }
 
 const (
