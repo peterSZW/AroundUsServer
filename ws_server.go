@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -86,7 +87,7 @@ func HandleMessage2(packetData []byte) string {
 	if err != nil {
 
 		rsp.Code = 500
-		rsp.Msg = "Couldn't parse json player data! Skipping iteration!"
+		rsp.Msg = "Couldn't parse json data."
 		rsp.MsgEx = err.Error()
 		msg, _ := json.Marshal(rsp)
 		return string(msg)
@@ -132,11 +133,27 @@ func home(w http.ResponseWriter, r *http.Request) {
 	homeTemplate.Execute(w, "ws://"+r.Host+"/echo")
 }
 
+/*
+curl -i -H "Content-Type: application/json" -X POST -d '{"user_id": "123", "coin":100, "success":1, "msg":"OK!" }'  http://127.0.0.1:7403/api
+*/
+
+func api(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	body_str := string(body)
+	fmt.Println(body_str)
+	result := HandleMessage2(body)
+	w.Header().Set("content-type", "text/json")
+	fmt.Fprint(w, string(result))
+
+}
+
 func start_websocket_server() {
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
 	http.HandleFunc("/", home)
+	http.HandleFunc("/api", api)
 	log.Printf("Starting WSK listening %s:%d", *host, *port)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

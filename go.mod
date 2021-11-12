@@ -9,4 +9,6 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
+	github.com/prsolucoes/gotslist v0.0.0-20160304081519-8a905f5e0578 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 )
