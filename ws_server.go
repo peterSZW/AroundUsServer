@@ -1,11 +1,15 @@
 package main
 
 import (
+	"aroundUsServer/packet"
+	"aroundUsServer/player"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -55,17 +59,19 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("recv: %s,%d", message, mt)
 
-		var msg MessageObj
+		jsonStu := HandleMessage2(message)
 
-		err = json.Unmarshal(message, &msg)
-		if err != nil {
-			msg.Code = 1
-			msg.Data = string(message)
+		// var msg MessageObj
 
-		}
-		jsonStu, _ := json.Marshal(msg)
+		// err = json.Unmarshal(message, &msg)
+		// if err != nil {
+		// 	msg.Code = 1
+		// 	msg.Data = string(message)
 
-		err = c.WriteMessage(mt, jsonStu)
+		// }
+		// jsonStu, _ := json.Marshal(msg)
+
+		err = c.WriteMessage(mt, []byte(jsonStu))
 		if err != nil {
 			log.Println("write:", err)
 			break
@@ -73,6 +79,55 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HandleMessage2(packetData []byte) string {
+	var dataobj packet.TBaseReqPacket
+	err := json.Unmarshal(packetData, &dataobj)
+	rsp := packet.TBaseRspPacket{}
+	if err != nil {
+
+		rsp.Code = 500
+		rsp.Msg = "Couldn't parse json player data! Skipping iteration!"
+		rsp.MsgEx = err.Error()
+		msg, _ := json.Marshal(rsp)
+		return string(msg)
+
+	}
+	switch dataobj.Type {
+	case packet.NewUser:
+		var dataobj packet.TNewUserReq
+		err := json.Unmarshal(packetData, &dataobj)
+
+		if err != nil {
+			log.Println("Cant parse json init player data!")
+		} else {
+			dataobj.Data.Uuid = dataobj.Uuid
+			player1 := dataobj.Data
+
+			currUser := player1.InitializePlayer()
+
+			{
+
+				player.PlayerListLock.Lock()
+				player.PlayerList[currUser.Uuid] = currUser
+				player.PlayerListLock.Unlock()
+
+				for i, obj := range player.PlayerList {
+					fmt.Println("(", i, ")", obj)
+				}
+
+			}
+		}
+	default:
+		rsp.Code = 500
+		rsp.Msg = "Unknow Type. " + strconv.Itoa(int(dataobj.Type))
+		//rsp.MsgEx = err.Error()
+
+	}
+
+	msg, _ := json.Marshal(rsp)
+	return string(msg)
+
+}
 func home(w http.ResponseWriter, r *http.Request) {
 	homeTemplate.Execute(w, "ws://"+r.Host+"/echo")
 }
