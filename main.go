@@ -49,7 +49,7 @@ func main() {
 
 		initSpawnPosition()
 
-		//go start_websocket_server()
+		go start_websocket_server()
 
 		// start listening
 		//go tcp.ListenTCP(*host, *port)

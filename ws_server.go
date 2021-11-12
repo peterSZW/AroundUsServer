@@ -82,7 +82,7 @@ func start_websocket_server() {
 	log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
 	http.HandleFunc("/", home)
-	log.Printf("Starting web socket listening on: %s:%d", *host, *port)
+	log.Printf("Starting WSK listening %s:%d", *host, *port)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Println(err)
