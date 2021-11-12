@@ -7,26 +7,55 @@ import (
 )
 
 const (
-	NewUser                       = iota + 1 // TCP// Client -> Server packets
-	GetUser                                  // TCP
-	Auth                                     // TCP
-	Disconnect                               // TCP
-	GetRooms                                 // TCP
-	GetRoomUsers                             // TCP
-	JoinRoom                                 // TCP
-	JoinNewRoom                              // TCP
-	LeaveRoom                                // TCP
-	Error                                    // tcp
-	GameLogic_UsersInGame                    // TCP// Server -> Client packets
-	GameLogic_IsUserManager                  // TCP
-	GameLogic_NewPlayerConnected             // TCP
-	GameLogic_ClientSpawnPosition            // TCP
-	GameLogic_GameOver                       // TCP
-	GameLogic_PlayerDied                     // TCP
-	GameLogic_KilledPlayer                   // TCP
-	GameLogic_Init                           // TCP
-	GameLogic_StartGame                      // TCP
+	NewUser                = iota + 1 // TCP// Client -> Server packets
+	GetUser                           // TCP
+	Auth                              // TCP
+	Disconnect                        // TCP
+	GetRooms                          // TCP
+	GetRoomUsers                      // TCP
+	JoinRoom                          // TCP
+	JoinNewRoom                       // TCP
+	LeaveRoom                         // TCP
+	Error                             // tcp
+	GL_UsersIn                        // TCP// Server -> Client packets
+	GL_IsUserManager                  // TCP
+	GL_NewPlayerConnected             // TCP
+	GL_ClientSpawnPosition            // TCP
+	GL_GameOver                       // TCP
+	GL_PlayerDied                     // TCP
+	GL_KilledPlayer                   // TCP
+	GL_Init                           // TCP
+	GL_StartGame                      // TCP
 )
+
+type TBasePacket struct {
+	Type  int16  `json:"type"`
+	Seq   int64  `json:"seq"`
+	Uuid  string `json:"uuid"`
+	Token string `json:"token"`
+}
+
+type TNewUserReq struct {
+	TBasePacket
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+}
+type TNewUserRsp struct {
+	TBasePacket
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+}
+
+type TAuthReq struct {
+	TBasePacket
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+	Pass  string `json:"pass"`
+}
+type TAuthRsp struct {
+	TBasePacket
+}
+
 const (
 	DialAddr          = iota + 1000 // UDP
 	UpdatePos                       // UDP
