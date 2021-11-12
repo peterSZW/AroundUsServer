@@ -161,11 +161,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 
 	case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
 
-		type TInitUser struct {
-			packet.ClientPacketRaw
-			Data *player.Player `json:"data"`
-		}
-		var dataobj TInitUser
+		var dataobj packet.TNewUserReq
 		err := json.Unmarshal(packetData, &dataobj)
 
 		if err != nil {
@@ -199,32 +195,34 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 
 	case packet.Disconnect: // example: {"type":12, "data":{"name":"bro", "color": 1}}
 
-		player1, err := UnmarshalUser([]byte(packetData))
+		var dataobj packet.TDisconnectReq
+		err := json.Unmarshal(packetData, &dataobj)
+
 		if err == nil {
-			log.Println("DeInitializePlayer", player1)
-			player1.DeInitializePlayer()
+			log.Println("DeInitializePlayer", dataobj)
+			//player1.DeInitializePlayer()
 		} else {
 			log.Println(err)
 		}
 
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
-		var newPosition player.PlayerPosition
-		err := json.Unmarshal(packetData, &newPosition)
+		var dataobj packet.TUpdatePosReq
+		err := json.Unmarshal(packetData, &dataobj)
 		if err != nil {
 			return fmt.Errorf("cant parse position player data")
 		}
 		playee := player.PlayerList[clientPacket.Uuid]
 		if playee != nil {
-			playee.PlayerPosition = newPosition
+			playee.PlayerPosition = dataobj.PP
 		}
 		//player.PlayerList[clientPacket.Uuid].PlayerPosition = newPosition
 	case packet.UpdateRotation: // {"type":7, "id": 0, "data":{"pitch":42, "yaw":11}}
-		var newRotation player.PlayerRotation
-		err := json.Unmarshal(packetData, &newRotation)
+		var dataobj packet.TUpdateRotationReq
+		err := json.Unmarshal(packetData, &dataobj)
 		if err != nil {
 			return fmt.Errorf("cant parse rotation player data")
 		}
-		player.PlayerList[clientPacket.Uuid].Rotation = newRotation
+		player.PlayerList[clientPacket.Uuid].Rotation = dataobj.PP
 	default:
 		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
 			tcp.SendErrorMsg(user.TcpConnection, "Invalid UDP packet type!")
