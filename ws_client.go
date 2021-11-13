@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/inconshreveable/log15"
+	"github.com/xiaomi-tc/log15"
+	//"github.com/inconshreveable/log15"
 )
 
 //var addr = flag.String("addr", "localhost:8080", "http service address")

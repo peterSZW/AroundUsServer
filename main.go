@@ -10,7 +10,8 @@ import (
 	//"log"
 	"strings"
 
-	"github.com/inconshreveable/log15"
+	"github.com/xiaomi-tc/log15"
+	//"github.com/inconshreveable/log15"
 )
 
 /*
