@@ -115,7 +115,7 @@ func handleIncomingUdpData() {
 
 func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket, packetData []byte) {
 
-	log15.Debug("-<-", "packet", string(packetData))
+	//log15.Debug("-<-", "packet", string(packetData))
 
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
 		aplayer, ok := player.PlayerMap.Load(clientPacket.Uuid)
@@ -144,16 +144,17 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 		var dataobj packet.TUpdatePosReq
 		err := json.Unmarshal(packetData, &dataobj)
 		if err != nil {
-			log15.Debug("TUpdatePosReq Unmarshal", "err", err)
+			log15.Error("TUpdatePosReq Unmarshal", "err", err)
 			return
 			//return fmt.Errorf("cant parse position player data")
 		}
 
 		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
 		if ok {
-			log15.Debug("SET PlayerPosition", "pos", dataobj.Data)
+			//log15.Debug("SET PlayerPosition", "pos", dataobj.Data)
 			aplayer.(*player.Player).LastUpdate = time.Now()
-			aplayer.(*player.Player).PlayerPosition = dataobj.Data
+			aplayer.(*player.Player).PlayerPosition.X = dataobj.Data.X
+			aplayer.(*player.Player).PlayerPosition.Y = dataobj.Data.Y
 			updateOnePlayerPositionNow(aplayer.(*player.Player))
 		} else {
 			log15.Warn("Not Found", "uuid", dataobj.Uuid)
@@ -198,7 +199,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 
 		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
 		if ok {
-			log15.Debug("SET Rotation", "Rotation", dataobj.Data)
+			//log15.Debug("SET Rotation", "Rotation", dataobj.Data)
 			aplayer.(*player.Player).LastUpdate = time.Now()
 			aplayer.(*player.Player).Rotation = dataobj.Data
 			updateOnePlayerPositionNow(aplayer.(*player.Player))
@@ -220,7 +221,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 
 func updateOnePlayerPositionNow(user *player.Player) {
 
-	BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+	BroadcastUDP(user.Uuid, user, packet.PositionBroadcast, []string{user.Uuid})
 
 }
 
@@ -229,7 +230,7 @@ func RemoveUnActivePlayer(sleepTime time.Duration) {
 	for {
 		player.PlayerMap.Range(func(k, v interface{}) bool {
 			user := v.(*player.Player)
-			if user.LastUpdate.Add(5 * time.Minute).Before(time.Now()) {
+			if user.LastUpdate.Add(1 * time.Minute).Before(time.Now()) {
 				player.PlayerMap.Delete(user.Uuid)
 			}
 
@@ -244,7 +245,7 @@ func updatePlayerPositionNow() {
 
 	player.PlayerMap.Range(func(k, v interface{}) bool {
 		user := v.(*player.Player)
-		BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+		BroadcastUDP(user.Uuid, user, packet.PositionBroadcast, []string{user.Uuid})
 
 		return true
 	})
@@ -261,9 +262,9 @@ func updatePlayerPositionEveryHalfSec() {
 
 // function wont send the message for players in the filter
 
-func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error {
+func BroadcastUDP(uuid string, data interface{}, packetType int16, userFilter []string) error {
 
-	packetToSend := packet.StampPacket("", data, packetType)
+	packetToSend := packet.StampPacket(uuid, data, packetType)
 	player.PlayerMap.Range(func(k, v interface{}) bool {
 		user := v.(*player.Player)
 		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {

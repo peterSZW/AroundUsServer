@@ -28,6 +28,11 @@ var host *string
 var port *int
 var userList map[string]string
 
+func init() {
+
+	//log15.SetHandler(log15.DiscardHandler())
+
+}
 func main() {
 	// init variables
 
