@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 	//"github.com/inconshreveable/log15"
 )
 
@@ -32,7 +32,7 @@ type MessageObj struct {
 func echo(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print("upgrade:", err)
+		log15.Error("upgrade:", "err", err)
 		return
 	}
 	defer c.Close()
@@ -43,7 +43,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 			msgbyte, _ := json.Marshal(msg)
 			err = c.WriteMessage(1, msgbyte)
 			if err != nil {
-				log15.Error("timmer write err:", err)
+				log15.Error("timmer write err:", "err", err)
 				break
 			}
 			time.Sleep(time.Second)
@@ -54,13 +54,13 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
-			log15.Error("read:", err)
+			log15.Error("read:", "err", err)
 			break
 		}
 		if mt != websocket.TextMessage {
 			continue
 		}
-		log.Printf("recv: %s,%d", message, mt)
+		log15.Debug("recv: ", "msg", message, "mt", mt)
 
 		jsonStu := HandleMessage2(message)
 
@@ -76,7 +76,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 		err = c.WriteMessage(mt, []byte(jsonStu))
 		if err != nil {
-			log15.Error("write:", err)
+			log15.Error("write:", "err", err)
 			break
 		}
 	}
@@ -156,10 +156,10 @@ func start_websocket_server() {
 	http.HandleFunc("/echo", echo)
 	http.HandleFunc("/", home)
 	http.HandleFunc("/api", api)
-	log.Printf("Starting WSK listening %s:%d", *host, *port)
+	log15.Debug("Starting WSK listening ", "h", *host, "p", *port)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log15.Error("ListenAndServe", err)
+		log15.Error("ListenAndServe", "err", err)
 	}
 }
 

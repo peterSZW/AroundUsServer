@@ -27,7 +27,6 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	github.com/xiaomi-tc/log15 v0.0.0-20191113113727-7f66c2abf493 // indirect
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect

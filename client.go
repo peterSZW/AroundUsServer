@@ -10,7 +10,7 @@ import (
 	"time"
 
 	//"github.com/inconshreveable/log15"
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 )
 
 func getIncomingClientUdp(udpConnection *net.UDPConn) {
@@ -22,7 +22,7 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 
 		size, addr, err := udpConnection.ReadFromUDP(buffer)
 		if err != nil {
-			log15.Error("Cant read packet!", err)
+			log15.Error("Cant read packet!", "err", err)
 			continue
 		}
 		log15.Debug("ReadFromUDP", addr)
@@ -85,7 +85,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log15.Error("SendUdpStream2", err)
+				log15.Error("SendUdpStream2", "err", err)
 			}
 		case "init", "it", "1":
 			user.Name = "peter"
@@ -95,7 +95,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log15.Error("SendUdpStream2", err)
+				log15.Error("SendUdpStream2", "err", err)
 			}
 		case "2":
 			user.Name = "leo"
@@ -105,7 +105,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log15.Error("SendUdpStream2", err)
+				log15.Error("SendUdpStream2", "err", err)
 			}
 		case "3":
 			user.Name = "alex"
@@ -115,7 +115,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log15.Error("SendUdpStream2", err)
+				log15.Error("SendUdpStream2", "err", err)
 			}
 		case "disconnet", "dc":
 			// i, err := strconv.Atoi(parameter)
@@ -128,7 +128,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log15.Error("SendUdpStream2", err)
+				log15.Error("SendUdpStream2", "err", err)
 			}
 		default:
 			log15.Error("Unknown command")

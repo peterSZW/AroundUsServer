@@ -7,18 +7,17 @@ import (
 	"aroundUsServer/utils"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"strings"
 
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 )
 
 func ListenTCP(host string, port int) {
 	tcpListener, err := net.Listen("tcp", host+":"+strconv.Itoa(port))
 	if err != nil {
-		log.Panicln(err)
+		log15.Crit("Listen", "err", err)
 	}
 	log15.Error("Starting TCP listening")
 	defer tcpListener.Close()
@@ -26,7 +25,7 @@ func ListenTCP(host string, port int) {
 	for {
 		tcpConnection, err := tcpListener.Accept()
 		if err != nil {
-			log15.Error("tcplisten", err)
+			log15.Error("tcplisten", "err", err)
 			continue
 		}
 
@@ -241,7 +240,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	newPlayer.PlayerPosition = player.SpawnPositionsStack[len(player.SpawnPositionsStack)-1]  // peek at the last element
 	player.SpawnPositionsStack = player.SpawnPositionsStack[:len(player.SpawnPositionsStack)] // pop
 
-	log.Print("New player got generated:")
+	log15.Error("New player got generated:")
 	newPlayer.PrintUser()
 
 	return newPlayer, nil
@@ -284,7 +283,7 @@ func BroadcastTCP(data []byte, packetType int16, userFilter []string) error {
 			packetToSend := packet.StampPacket("", data, packetType)
 			_, err := packetToSend.SendTcpStream(user.TcpConnection)
 			if err != nil {
-				log15.Error("SendTcpStream", err)
+				log15.Error("SendTcpStream", "err", err)
 			}
 		}
 	}

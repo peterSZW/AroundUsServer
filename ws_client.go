@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 	//"github.com/inconshreveable/log15"
 )
 
@@ -23,11 +23,11 @@ func ws_client() {
 	signal.Notify(interrupt, os.Interrupt)
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
-	log.Printf("connecting to %s", u.String())
+	log15.Debug("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Fatal("dial:", err)
+		log15.Crit("dial:", "err", err)
 	}
 	defer c.Close()
 
@@ -38,10 +38,10 @@ func ws_client() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log15.Error("read:", err)
+				log15.Error("read:", "err", err)
 				return
 			}
-			log.Printf("recv: %s", message)
+			log15.Debug("recv:", "msg", message)
 		}
 	}()
 
@@ -55,7 +55,7 @@ func ws_client() {
 		case t := <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
 			if err != nil {
-				log15.Error("write:", err)
+				log15.Error("write:", "err", err)
 				return
 			}
 		case <-interrupt:
@@ -65,7 +65,7 @@ func ws_client() {
 			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log15.Error("write close:", err)
+				log15.Error("write close:", "err", err)
 				return
 			}
 			select {

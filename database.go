@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	//"github.com/inconshreveable/log15"
+	"github.com/inconshreveable/log15"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/xiaomi-tc/log15"
 )
 
 //savecode,email=logic_readmailcode(req.Name,req.Email)
@@ -287,7 +287,7 @@ func logic_mail_linkx() {
 }
 
 func ErrIsNil_LOG(err error, logmsg string) bool {
-	//fmt.Println(logmsg, "======", err)
+	//fmt.Println(logmsg, "======","err", err)
 	if err != nil {
 		log15.Error(logmsg, "err", err)
 	}

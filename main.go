@@ -10,7 +10,7 @@ import (
 	//"log"
 	"strings"
 
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 	//"github.com/inconshreveable/log15"
 )
 
@@ -39,7 +39,7 @@ func main() {
 
 	data, err := ioutil.ReadFile("user.txt")
 	if err != nil {
-		log15.Error("ReadFile", err)
+		log15.Error("ReadFile", "err", err)
 	}
 	userlist := string(data)
 	strings.Split(userlist, "\n")

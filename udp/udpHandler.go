@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/enriquebris/goconcurrentqueue"
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 )
 
 var packetsQueue *goconcurrentqueue.FIFO
@@ -31,7 +31,7 @@ func ListenUDP(host string, port int) {
 	addresss := fmt.Sprintf("%s:%d", host, port)
 	protocol := "udp"
 
-	log15.Error("Starting UDP listening", addresss)
+	log15.Debug("Starting UDP listening", "addr", addresss)
 	//Build the address
 	udpAddr, err := net.ResolveUDPAddr(protocol, addresss)
 	if err != nil {
@@ -42,7 +42,7 @@ func ListenUDP(host string, port int) {
 	//Create the connection
 	udpConnection, err = net.ListenUDP(protocol, udpAddr)
 	if err != nil {
-		log15.Error("ListenUDP", err)
+		log15.Error("ListenUDP", "err", err)
 	}
 
 	// create queue readers
@@ -73,7 +73,7 @@ func getIncomingUdp(quit chan struct{}) {
 
 		size, addr, err := udpConnection.ReadFromUDP(buffer)
 		if err != nil {
-			log15.Error("Cant read packet!", err)
+			log15.Error("Cant read packet!", "err", err)
 			continue
 		}
 		data := buffer[:size]
@@ -81,7 +81,7 @@ func getIncomingUdp(quit chan struct{}) {
 		packetsQueue.Enqueue(udpPacket{Address: addr, Data: data})
 	}
 
-	log15.Error("Listener failed - restarting!", err)
+	log15.Error("Listener failed - restarting!", "err", err)
 	quit <- struct{}{}
 }
 
@@ -199,10 +199,10 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		err := json.Unmarshal(packetData, &dataobj)
 
 		if err == nil {
-			log15.Debug("DeInitializePlayer", dataobj)
+			log15.Debug("DeInitializePlayer", "do", dataobj)
 			//player1.DeInitializePlayer()
 		} else {
-			log15.Error("Unmarshal", err)
+			log15.Error("Unmarshal", "err", err)
 		}
 
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
@@ -255,7 +255,7 @@ func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error
 		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
 			_, err := packetToSend.SendUdpStream(udpConnection, user.UdpAddress)
 			if err != nil {
-				log15.Error("SendUdpStream", err)
+				log15.Error("SendUdpStream", "err", err)
 			}
 		}
 	}

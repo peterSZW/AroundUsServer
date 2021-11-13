@@ -3,11 +3,10 @@ package player
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"sync"
 
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 )
 
 var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
@@ -97,7 +96,7 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
 	SpawnPositionsStack = SpawnPositionsStack[:len(SpawnPositionsStack)]       // pop
 
-	log.Print("New player got generated:")
+	log15.Error("New player got generated:")
 	newPlayer.PrintUser()
 
 	return newPlayer

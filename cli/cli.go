@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/xiaomi-tc/log15"
+	"github.com/inconshreveable/log15"
 )
 
 func ServerConsoleCLI() {
