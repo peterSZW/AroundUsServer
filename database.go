@@ -382,3 +382,30 @@ func logic_save_uuid(uuid string) error {
 	return nil
 
 }
+
+func logic_delete_uuid(uuid string) error {
+
+	// try update, if not success,try insert
+	db, err := sql.Open("sqlite3", DBFILE)
+	if !ErrIsNil_LOG(err, "open db") {
+		return err
+	}
+	defer db.Close()
+
+	sql := "delete from   users where uuid=?"
+	stmt, err := db.Prepare(sql)
+	if !ErrIsNil_LOG(err, sql) {
+		return err
+	}
+	res, err := stmt.Exec(uuid)
+	if !ErrIsNil_LOG(err, sql+"(Exec)") {
+		return err
+	}
+	affect2, err := res.RowsAffected()
+	if !ErrIsNil_LOG(err, "rows") {
+		return err
+	}
+	fmt.Println(affect2)
+	return nil
+
+}

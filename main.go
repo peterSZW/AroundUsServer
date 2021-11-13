@@ -6,8 +6,11 @@ import (
 	"aroundUsServer/udp"
 	"flag"
 	"io/ioutil"
-	"log"
+
+	//"log"
 	"strings"
+
+	"github.com/inconshreveable/log15"
 )
 
 /*
@@ -35,13 +38,13 @@ func main() {
 
 	data, err := ioutil.ReadFile("user.txt")
 	if err != nil {
-		log.Println(err)
+		log15.Error("ReadFile", err)
 	}
 	userlist := string(data)
 	strings.Split(userlist, "\n")
 
 	if *isclient {
-		log.Printf("Starting client")
+		log15.Debug("Starting client")
 
 		client()
 
@@ -103,7 +106,7 @@ func main() {
 
 // 	currUserJSON, err = encapsulatePacketID(UserDisconnected, currUserJSON)
 // 	if err != nil {
-// 		log.Println("Didn't encapsulate currUserJSON with ID")
+// 		log15.Error("Didn't encapsulate currUserJSON with ID")
 // 		return
 // 	}
 // 	sendEveryoneTcpData([]byte(currUserJSON), []string{p.Name})

@@ -3,8 +3,9 @@ package cli
 import (
 	"aroundUsServer/player"
 	"fmt"
-	"log"
 	"strconv"
+
+	"github.com/xiaomi-tc/log15"
 )
 
 func ServerConsoleCLI() {
@@ -17,9 +18,9 @@ func ServerConsoleCLI() {
 		//commands := strings.Split(strings.Trim(command, "\n\t /\\'\""), " ")
 		switch command {
 		case "help", "h":
-			log.Println("help(h)")
-			log.Println("list(ls)")
-			log.Println("disconnet(dc) [id]")
+			log15.Error("help(h)")
+			log15.Error("list(ls)")
+			log15.Error("disconnet(dc) [id]")
 		case "list", "ls":
 			for _, player1 := range player.PlayerList {
 				player1.PrintUser()
@@ -27,11 +28,11 @@ func ServerConsoleCLI() {
 		case "disconnet", "dc":
 			_, err := strconv.Atoi(parameter)
 			if err != nil {
-				log.Println("Cant convert to number position")
+				log15.Error("Cant convert to number position")
 			}
 			// globals.PlayerList[id].TcpConnection.Close()
 		default:
-			log.Println("Unknown command")
+			log15.Error("Unknown command")
 		}
 	}
 }

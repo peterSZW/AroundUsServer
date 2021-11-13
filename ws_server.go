@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/inconshreveable/log15"
 )
 
 var addr = flag.String("addr", "0.0.0.0:7403", "http service address")
@@ -41,7 +42,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 			msgbyte, _ := json.Marshal(msg)
 			err = c.WriteMessage(1, msgbyte)
 			if err != nil {
-				log.Println("timmer write err:", err)
+				log15.Error("timmer write err:", err)
 				break
 			}
 			time.Sleep(time.Second)
@@ -52,7 +53,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
+			log15.Error("read:", err)
 			break
 		}
 		if mt != websocket.TextMessage {
@@ -74,7 +75,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 		err = c.WriteMessage(mt, []byte(jsonStu))
 		if err != nil {
-			log.Println("write:", err)
+			log15.Error("write:", err)
 			break
 		}
 	}
@@ -99,7 +100,7 @@ func HandleMessage2(packetData []byte) string {
 		err := json.Unmarshal(packetData, &dataobj)
 
 		if err != nil {
-			log.Println("Cant parse json init player data!")
+			log15.Error("Cant parse json init player data!")
 		} else {
 			dataobj.Data.Uuid = dataobj.Uuid
 			player1 := dataobj.Data
@@ -157,7 +158,7 @@ func start_websocket_server() {
 	log.Printf("Starting WSK listening %s:%d", *host, *port)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Println(err)
+		log15.Error("ListenAndServe", err)
 	}
 }
 

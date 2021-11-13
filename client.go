@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"log"
+	//"github.com/inconshreveable/log15"
+	"github.com/xiaomi-tc/log15"
 )
 
 func getIncomingClientUdp(udpConnection *net.UDPConn) {
@@ -21,16 +22,16 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 
 		size, addr, err := udpConnection.ReadFromUDP(buffer)
 		if err != nil {
-			log.Println("Cant read packet!", err)
+			log15.Error("Cant read packet!", err)
 			continue
 		}
-		log.Println(addr)
+		log15.Debug("ReadFromUDP", addr)
 		data := buffer[:size]
 
 		var dataPacket packet.ClientPacket
 		err = json.Unmarshal(data, &dataPacket)
 		if err != nil {
-			log.Println("Couldn't parse json player data! Skipping iteration!")
+			log15.Error("Couldn't parse json player data! Skipping iteration!")
 			continue
 		} else {
 			fmt.Println(dataPacket)
@@ -76,15 +77,15 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 		//fmt.Println(command, "|", commands)
 		switch command {
 		case "help", "h":
-			log.Println("help(h)")
-			log.Println("login(lg)")
-			log.Println("disconnet(dc) [id]")
+			log15.Error("help(h)")
+			log15.Error("login(lg)")
+			log15.Error("disconnet(dc) [id]")
 		case "login", "lg":
 			packetToSend := packet.StampPacket("uuid", user, packet.DialAddr)
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream2", err)
 			}
 		case "init", "it", "1":
 			user.Name = "peter"
@@ -94,7 +95,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream2", err)
 			}
 		case "2":
 			user.Name = "leo"
@@ -104,7 +105,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream2", err)
 			}
 		case "3":
 			user.Name = "alex"
@@ -114,12 +115,12 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream2", err)
 			}
 		case "disconnet", "dc":
 			// i, err := strconv.Atoi(parameter)
 			// if err != nil {
-			// 	log.Println(err.Error() + "Cant convert to number position")
+			// 	log15.Error(err.Error() + "Cant convert to number position")
 			// }
 
 			user := player.Player{Uuid: parameter}
@@ -127,10 +128,10 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 			_, err := packetToSend.SendUdpStream2(udpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream2", err)
 			}
 		default:
-			log.Println("Unknown command")
+			log15.Error("Unknown command")
 		}
 	}
 }

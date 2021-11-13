@@ -8,11 +8,11 @@ import (
 	"aroundUsServer/utils"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
 	"github.com/enriquebris/goconcurrentqueue"
+	"github.com/xiaomi-tc/log15"
 )
 
 var packetsQueue *goconcurrentqueue.FIFO
@@ -31,18 +31,18 @@ func ListenUDP(host string, port int) {
 	addresss := fmt.Sprintf("%s:%d", host, port)
 	protocol := "udp"
 
-	log.Println("Starting UDP listening", addresss)
+	log15.Error("Starting UDP listening", addresss)
 	//Build the address
 	udpAddr, err := net.ResolveUDPAddr(protocol, addresss)
 	if err != nil {
-		log.Println("Wrong Address")
+		log15.Error("Wrong Address")
 		return
 	}
 
 	//Create the connection
 	udpConnection, err = net.ListenUDP(protocol, udpAddr)
 	if err != nil {
-		log.Println(err)
+		log15.Error("ListenUDP", err)
 	}
 
 	// create queue readers
@@ -73,7 +73,7 @@ func getIncomingUdp(quit chan struct{}) {
 
 		size, addr, err := udpConnection.ReadFromUDP(buffer)
 		if err != nil {
-			log.Println("Cant read packet!", err)
+			log15.Error("Cant read packet!", err)
 			continue
 		}
 		data := buffer[:size]
@@ -81,7 +81,7 @@ func getIncomingUdp(quit chan struct{}) {
 		packetsQueue.Enqueue(udpPacket{Address: addr, Data: data})
 	}
 
-	log.Println("Listener failed - restarting!", err)
+	log15.Error("Listener failed - restarting!", err)
 	quit <- struct{}{}
 }
 
@@ -89,20 +89,20 @@ func handleIncomingUdpData() {
 	for {
 		dequeuedRawPacket, err := packetsQueue.DequeueOrWaitForNextElement()
 		if err != nil {
-			log.Println("Couldn't dequeue!")
+			log15.Error("Couldn't dequeue!")
 			continue
 		}
 
 		dequeuedPacket, ok := dequeuedRawPacket.(udpPacket)
 		if !ok {
-			log.Println("Couldn't turn udp data to udpPacket!")
+			log15.Error("Couldn't turn udp data to udpPacket!")
 			continue
 		}
 
 		var dataPacket packet.ClientPacketRaw
 		err = json.Unmarshal(dequeuedPacket.Data, &dataPacket)
 		if err != nil {
-			log.Println("Couldn't parse json player data! Skipping iteration!")
+			log15.Error("Couldn't parse json player data! Skipping iteration!")
 			continue
 		}
 
@@ -110,18 +110,18 @@ func handleIncomingUdpData() {
 
 		err = handleUdpData(dequeuedPacket.Address, dataPacket, dequeuedPacket.Data)
 		if err != nil {
-			log.Println("Error while handling UDP packet: " + err.Error())
+			log15.Error("Error while handling UDP packet: " + err.Error())
 			continue
 		}
 	}
 }
 
 func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw, packetData []byte) error {
-	//log.Println(clientPacket)
+	//log15.Error(clientPacket)
 
-	log.Println("-<-", string(packetData))
+	log15.Error("-<-", string(packetData))
 
-	// log.Println("#1#", clientPacket)
+	// log15.Error("#1#", clientPacket)
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
 		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
 			user.UdpAddress = userAddress
@@ -129,10 +129,10 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		return nil
 	}
 
-	// log.Println("#2#", clientPacket)
+	// log15.Error("#2#", clientPacket)
 	// dataPacket, err := clientPacket.DataToBytes()
 	// if err != nil {
-	// 	log.Println(err)
+	// 	log15.Error(err)
 	// 	return err
 	// }
 
@@ -165,7 +165,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		err := json.Unmarshal(packetData, &dataobj)
 
 		if err != nil {
-			log.Println("Cant parse json init player data!")
+			log15.Error("Cant parse json init player data!")
 		} else {
 			dataobj.Data.Uuid = dataobj.Uuid
 			player1 := dataobj.Data
@@ -199,10 +199,10 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		err := json.Unmarshal(packetData, &dataobj)
 
 		if err == nil {
-			log.Println("DeInitializePlayer", dataobj)
+			log15.Debug("DeInitializePlayer", dataobj)
 			//player1.DeInitializePlayer()
 		} else {
-			log.Println(err)
+			log15.Error("Unmarshal", err)
 		}
 
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
@@ -243,7 +243,7 @@ func updatePlayerPosition() {
 				BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
 			}
 		}
-		//log.Println("Loop position")
+		//log15.Error("Loop position")
 		time.Sleep(500 * time.Millisecond)
 	}
 }
@@ -255,7 +255,7 @@ func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error
 		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
 			_, err := packetToSend.SendUdpStream(udpConnection, user.UdpAddress)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendUdpStream", err)
 			}
 		}
 	}
@@ -272,7 +272,7 @@ func UnmarshalUser(data []byte) (*player.Player, error) {
 
 	err := json.Unmarshal(data, &dataobj)
 	if err != nil {
-		log.Println("Cant parse json init player data!")
+		log15.Error("Cant parse json init player data!")
 		return nil, err
 	}
 	return dataobj.Data, nil

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/inconshreveable/log15"
 )
 
 //var addr = flag.String("addr", "localhost:8080", "http service address")
@@ -36,7 +37,7 @@ func ws_client() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				log15.Error("read:", err)
 				return
 			}
 			log.Printf("recv: %s", message)
@@ -53,17 +54,17 @@ func ws_client() {
 		case t := <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
 			if err != nil {
-				log.Println("write:", err)
+				log15.Error("write:", err)
 				return
 			}
 		case <-interrupt:
-			log.Println("interrupt")
+			log15.Error("interrupt")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log.Println("write close:", err)
+				log15.Error("write close:", err)
 				return
 			}
 			select {

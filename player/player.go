@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"sync"
+
+	"github.com/xiaomi-tc/log15"
 )
 
 var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
@@ -42,7 +44,7 @@ type PlayerRotation struct {
 
 func (newPlayer *Player) InitializePlayer() *Player {
 
-	log.Println("====init=======", newPlayer)
+	log15.Error("====init=======", newPlayer)
 
 	//newPlayer.TcpConnection = tcpConnection // Set the player TCP connection socket
 

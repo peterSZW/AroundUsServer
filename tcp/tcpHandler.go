@@ -11,6 +11,8 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/xiaomi-tc/log15"
 )
 
 func ListenTCP(host string, port int) {
@@ -18,13 +20,13 @@ func ListenTCP(host string, port int) {
 	if err != nil {
 		log.Panicln(err)
 	}
-	log.Println("Starting TCP listening")
+	log15.Error("Starting TCP listening")
 	defer tcpListener.Close()
 
 	for {
 		tcpConnection, err := tcpListener.Accept()
 		if err != nil {
-			log.Println(err)
+			log15.Error("tcplisten", err)
 			continue
 		}
 
@@ -33,9 +35,9 @@ func ListenTCP(host string, port int) {
 }
 
 func handleTcpPlayer(conn net.Conn) {
-	log.Println("Accepted new connection.")
+	log15.Error("Accepted new connection.")
 	defer conn.Close()
-	defer log.Println("Closed connection.")
+	defer log15.Error("Closed connection.")
 
 	if !globals.IsInLobby {
 		SendErrorMsg(conn, "Game has already started!")
@@ -50,26 +52,26 @@ func handleTcpPlayer(conn net.Conn) {
 		size, err := conn.Read(buf)
 		if err != nil {
 			SendErrorMsg(conn, "Error while reading the packet!\n"+err.Error())
-			log.Println(string(buf))
+			log15.Error(string(buf))
 			return
 		}
 		rawStreamData := []byte(strings.TrimSpace(string(buf[:size])))
 
-		log.Println(string(rawStreamData))
+		log15.Error(string(rawStreamData))
 
 		// Get the packet ID from the JSON
 		var clientPacket packet.ClientPacket
 		err = json.Unmarshal(rawStreamData, &clientPacket)
 		if err != nil {
-			log.Println("Couldn't parse json player data! Skipping iteration! " + err.Error())
+			log15.Error("Couldn't parse json player data! Skipping iteration! " + err.Error())
 			continue
 		}
 
 		// packetData := []byte(clientPacket.Data)
 		// packetData, ok :=  fmt.Sprint(data)
-		// log.Println(packetData)
+		// log15.Error(packetData)
 		// if !ok {
-		// 	log.Println("Couldn't turn data to []byte! Skipping iteration! ")
+		// 	log15.Error("Couldn't turn data to []byte! Skipping iteration! ")
 		// 	continue
 		// }
 
@@ -82,10 +84,10 @@ func handleTcpPlayer(conn net.Conn) {
 
 		// packetData, err := clientPacket.DataToBytes()
 		// if err != nil {
-		// 	log.Println("Cant turn inteface to []byte!")
+		// 	log15.Error("Cant turn inteface to []byte!")
 		// 	return
 		// }
-		// log.Println(string(packetData))
+		// log15.Error(string(packetData))
 
 		switch clientPacket.Type {
 		case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
@@ -123,7 +125,7 @@ func handleTcpPlayer(conn net.Conn) {
 
 			// currUserJSON, err = encapsulatePacketID(NewPlayerConnected, currUserJSON)
 			// if err != nil {
-			// 	log.Println("Didn't encapsulate currUserJSON with ID")
+			// 	log15.Error("Didn't encapsulate currUserJSON with ID")
 			// }
 			// sendEveryoneTcpData([]byte(currUserJSON), []string{currUser.Name})
 
@@ -134,28 +136,28 @@ func handleTcpPlayer(conn net.Conn) {
 			// }
 			// ClientSpawnPositionJSON, err = encapsulatePacketID(ClientSpawnPosition, ClientSpawnPositionJSON)
 			// if err != nil {
-			// 	log.Println("Didn't encapsulate currUserJSON with ID")
+			// 	log15.Error("Didn't encapsulate currUserJSON with ID")
 			// }
 			// conn.Write([]byte(stampPacketLength(ClientSpawnPositionJSON)))
 
 			// // Tell the current user who is already connected
 			// conenctedUsersJSON, err = encapsulatePacketID(UsersInGame, conenctedUsersJSON)
 			// if err != nil {
-			// 	log.Println("Didn't encapsulate currUserJSON with ID")
+			// 	log15.Error("Didn't encapsulate currUserJSON with ID")
 			// }
 			// conn.Write([]byte(stampPacketLength(conenctedUsersJSON)))
 
 			// // Tell the user if he is manager
 			// conenctedUsersJSON, err = encapsulatePacketID(IsUserManager, []byte(strconv.FormatBool(currUser.isManager)))
 			// if err != nil {
-			// 	log.Println("Didn't encapsulate currUserJSON with ID")
+			// 	log15.Error("Didn't encapsulate currUserJSON with ID")
 			// }
 			// conn.Write([]byte(stampPacketLength(conenctedUsersJSON)))
 
 			// // Tell the his ID
 			// conenctedUsersJSON, err = encapsulatePacketID(UserId, []byte(strconv.FormatInt(int64(currUser.id), 10)))
 			// if err != nil {
-			// 	log.Println("Didn't encapsulate currUserJSON with ID")
+			// 	log15.Error("Didn't encapsulate currUserJSON with ID")
 			// }
 			// conn.Write([]byte(stampPacketLength(conenctedUsersJSON)))
 
@@ -163,12 +165,12 @@ func handleTcpPlayer(conn net.Conn) {
 		// 	var rotation playerRotation
 		// 	data, err := packet.dataToBytes()
 		// 	if err != nil {
-		// 		log.Println("Cant turn inteface to []byte!")
+		// 		log15.Error("Cant turn inteface to []byte!")
 		// 		return
 		// 	}
 		// 	err = json.Unmarshal(data, &rotation)
 		// 	if err != nil {
-		// 		log.Println("Cant parse json init player data!")
+		// 		log15.Error("Cant parse json init player data!")
 		// 	}
 		// 	playerList[currUser.id].Rotation = rotation.Rotation
 		default:
@@ -186,7 +188,7 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	var newPlayer *player.Player
 	err := json.Unmarshal(data, &newPlayer)
 	if err != nil {
-		log.Println("Cant parse json init player data!")
+		log15.Error("Cant parse json init player data!")
 		return nil, err
 	}
 
@@ -268,7 +270,7 @@ func deInitializePlayer(playerToDelete *player.Player) error {
 }
 
 func SendErrorMsg(conn net.Conn, msg string) error {
-	log.Println(msg)
+	log15.Error(msg)
 	errorPacket := packet.StampPacket("", []byte(msg), packet.Error)
 	_, err := errorPacket.SendTcpStream(conn)
 	return err
@@ -278,11 +280,11 @@ func SendErrorMsg(conn net.Conn, msg string) error {
 func BroadcastTCP(data []byte, packetType int16, userFilter []string) error {
 	for _, user := range player.PlayerList {
 		if !utils.IntInArray(user.Uuid, userFilter) {
-			log.Println("Sending data to everyone(Filtered) " + string(data))
+			log15.Error("Sending data to everyone(Filtered) " + string(data))
 			packetToSend := packet.StampPacket("", data, packetType)
 			_, err := packetToSend.SendTcpStream(user.TcpConnection)
 			if err != nil {
-				log.Println(err)
+				log15.Error("SendTcpStream", err)
 			}
 		}
 	}
