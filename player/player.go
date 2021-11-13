@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"net"
 	"sync"
-
-	"github.com/inconshreveable/log15"
+	"time"
 )
 
 var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
 
-var PlayerList = make(map[string]*Player, 10) // holds the players, maximum 10
+//var PlayerList = make(map[string]*Player, 10) // holds the players, maximum 10
 
 var PlayerMap sync.Map
 
-var PlayerListLock sync.Mutex
+// var PlayerListLock sync.Mutex
 var Colors [12]bool // holds the colors, index indicated the color and the value if its taken or not
 var CurrId int      // the next player id when joining
 type Player struct {
@@ -31,6 +30,7 @@ type Player struct {
 	Rotation       PlayerRotation `json:"rotation"`       // Pitch: -90 <= pitch <= 90(head up and down), Yaw: 0 <= rotation <= 360(body rotation)
 	TcpConnection  net.Conn       `json:"-"`              // The player TCP connection socket
 	UdpAddress     *net.UDPAddr   `json:"-"`              // The player UDP address socket
+	LastUpdate     time.Time      `json:"-"`              // The player UDP address socket
 }
 
 type PlayerPosition struct {
@@ -54,64 +54,64 @@ func (newPlayer *Player) InitializePlayer() *Player {
 	return val.(*Player)
 }
 
-func (newPlayer *Player) InitializePlayer1() *Player {
+// func (newPlayer *Player) InitializePlayer1() *Player {
 
-	log15.Debug("====init=======", "np", newPlayer)
+// 	log15.Debug("====init=======", "np", newPlayer)
 
-	// check if the name is taken or invalid
-	// we need to keep a counter so the name will be in the format `<name> <count>`
+// 	// check if the name is taken or invalid
+// 	// we need to keep a counter so the name will be in the format `<name> <count>`
 
-	var newNameCount int16
-	var nameOk bool
-	oldName := newPlayer.Name
+// 	var newNameCount int16
+// 	var nameOk bool
+// 	oldName := newPlayer.Name
 
-	for !nameOk {
-		nameOk = true
-		for _, player := range PlayerList {
-			if player.Name == newPlayer.Name {
-				newNameCount++
-				nameOk = false
-				newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
-				break
-			}
-		}
-	}
+// 	for !nameOk {
+// 		nameOk = true
+// 		for _, player := range PlayerList {
+// 			if player.Name == newPlayer.Name {
+// 				newNameCount++
+// 				nameOk = false
+// 				newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
+// 				break
+// 			}
+// 		}
+// 	}
 
-	if newNameCount == 0 {
-		newPlayer.Name = oldName
-	}
+// 	if newNameCount == 0 {
+// 		newPlayer.Name = oldName
+// 	}
 
-	// check if the color is taken or invalid, if it is assign next not taken color
-	if int16(0) > newPlayer.Color || int16(len(Colors)) <= newPlayer.Color || Colors[newPlayer.Color] {
-		for index, color := range Colors {
-			if !color {
-				newPlayer.Color = int16(index)
-				break
-			}
-		}
-	}
+// 	// check if the color is taken or invalid, if it is assign next not taken color
+// 	if int16(0) > newPlayer.Color || int16(len(Colors)) <= newPlayer.Color || Colors[newPlayer.Color] {
+// 		for index, color := range Colors {
+// 			if !color {
+// 				newPlayer.Color = int16(index)
+// 				break
+// 			}
+// 		}
+// 	}
 
-	Colors[newPlayer.Color] = true // set player color as taken
+// 	Colors[newPlayer.Color] = true // set player color as taken
 
-	// check if he is the first one in the lobby, if true set the player to be the game manager
-	if len(PlayerList) == 0 {
-		newPlayer.IsManager = true
-	}
+// 	// check if he is the first one in the lobby, if true set the player to be the game manager
+// 	// if len(PlayerList) == 0 {
+// 	// 	newPlayer.IsManager = true
+// 	// }
 
-	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
+// 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
 
-	//newPlayer.Uuid = strconv.Itoa(CurrId)
-	//CurrId++
+// 	//newPlayer.Uuid = strconv.Itoa(CurrId)
+// 	//CurrId++
 
-	// set player spawn position
-	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
-	SpawnPositionsStack = SpawnPositionsStack[:len(SpawnPositionsStack)]       // pop
+// 	// set player spawn position
+// 	newPlayer.PlayerPosition = SpawnPositionsStack[len(SpawnPositionsStack)-1] // peek at the last element
+// 	SpawnPositionsStack = SpawnPositionsStack[:len(SpawnPositionsStack)]       // pop
 
-	log15.Error("New player got generated:")
-	newPlayer.PrintUser()
+// 	log15.Error("New player got generated:")
+// 	newPlayer.PrintUser()
 
-	return newPlayer
-}
+// 	return newPlayer
+// }
 
 func (playerToDelete *Player) DeInitializePlayer() error {
 	PlayerMap.Delete(playerToDelete.Uuid)
@@ -119,27 +119,27 @@ func (playerToDelete *Player) DeInitializePlayer() error {
 	return nil
 }
 
-func (playerToDelete *Player) DeInitializePlayer1() error {
-	PlayerListLock.Lock()
-	defer PlayerListLock.Unlock()
+// func (playerToDelete *Player) DeInitializePlayer1() error {
+// 	PlayerListLock.Lock()
+// 	defer PlayerListLock.Unlock()
 
-	delete(PlayerList, playerToDelete.Uuid)
+// 	delete(PlayerList, playerToDelete.Uuid)
 
-	// give another player the manager
-	if playerToDelete.IsManager {
-		for _, nextPlayer := range PlayerList {
-			nextPlayer.IsManager = true
-			break
-		}
-	}
+// 	// give another player the manager
+// 	if playerToDelete.IsManager {
+// 		for _, nextPlayer := range PlayerList {
+// 			nextPlayer.IsManager = true
+// 			break
+// 		}
+// 	}
 
-	// free the color
-	Colors[playerToDelete.Color] = false
+// 	// free the color
+// 	Colors[playerToDelete.Color] = false
 
-	playerToDelete = nil
+// 	playerToDelete = nil
 
-	return nil
-}
+// 	return nil
+// }
 
 func (user *Player) PrintUser() {
 	//p, err := json.MarshalIndent(user, "", " ")
@@ -148,5 +148,5 @@ func (user *Player) PrintUser() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("%s %v\n", p, user.UdpAddress)
+	fmt.Printf("%s %v %v\n", p, user.UdpAddress, user.LastUpdate)
 }

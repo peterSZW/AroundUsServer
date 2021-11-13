@@ -85,6 +85,10 @@ func ApiHandleMessage(packetData []byte) string {
 
 	}
 	switch dataobj.Type {
+	//======================================
+	//======================================
+	//======================================
+	//======================================
 	case packet.NewUser:
 		var dataobj packet.TNewUserReq
 		err := json.Unmarshal(packetData, &dataobj)
@@ -101,19 +105,14 @@ func ApiHandleMessage(packetData []byte) string {
 			}
 			dataobj.Data.Uuid = dataobj.Uuid
 			player1 := dataobj.Data
-			{
-				currUser := player1.InitializePlayer()
+			player1.LastUpdate = time.Now()
+			player1.InitializePlayer()
 
-				player.PlayerListLock.Lock()
-				player.PlayerList[currUser.Uuid] = currUser
-				player.PlayerListLock.Unlock()
-
-				for i, obj := range player.PlayerList {
-					fmt.Println("(", i, ")", obj)
-				}
-
-			}
 		}
+	//======================================
+	//======================================
+	//======================================
+	//======================================
 
 	case packet.Disconnect:
 
@@ -127,6 +126,10 @@ func ApiHandleMessage(packetData []byte) string {
 		} else {
 			log15.Error("Unmarshal", "err", err)
 		}
+	//======================================
+	//======================================
+	//======================================
+	//======================================
 
 	default:
 		rsp.Code = 500

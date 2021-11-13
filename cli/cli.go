@@ -22,15 +22,20 @@ func ServerConsoleCLI() {
 			log15.Error("list(ls)")
 			log15.Error("disconnet(dc) [id]")
 		case "list", "ls":
-			for _, player1 := range player.PlayerList {
-				player1.PrintUser()
-			}
+
+			player.PlayerMap.Range(func(k, v interface{}) bool {
+				user := v.(*player.Player)
+				user.PrintUser()
+
+				return true
+			})
+
 		case "disconnet", "dc":
 			_, err := strconv.Atoi(parameter)
 			if err != nil {
 				log15.Error("Cant convert to number position")
 			}
-			// globals.PlayerList[id].TcpConnection.Close()
+
 		default:
 			log15.Error("Unknown command")
 		}

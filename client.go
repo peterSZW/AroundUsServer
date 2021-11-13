@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	//"github.com/inconshreveable/log15"
-
 	"github.com/imroc/req"
 	"github.com/inconshreveable/log15"
 )
@@ -86,8 +84,7 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 	for {
 		var command, parameter string
 		fmt.Scanln(&command, &parameter)
-		//commands := strings.Split(strings.Trim(command, "\n\t/\\'\""), " ")
-		//fmt.Println(command, "|", commands)
+
 		switch command {
 
 		case "n1":

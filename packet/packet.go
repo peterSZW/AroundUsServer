@@ -8,32 +8,30 @@ import (
 )
 
 const (
-	NewUser                = iota + 1 // TCP// Client -> Server packets
-	GetUser                           // TCP
-	Auth                              // TCP
-	Disconnect                        // TCP
-	GetRooms                          // TCP
-	GetRoomUsers                      // TCP
-	JoinRoom                          // TCP
-	JoinNewRoom                       // TCP
-	LeaveRoom                         // TCP
-	Error                             // tcp
-	GL_UsersIn                        // TCP// Server -> Client packets
-	GL_IsUserManager                  // TCP
-	GL_NewPlayerConnected             // TCP
-	GL_ClientSpawnPosition            // TCP
-	GL_GameOver                       // TCP
-	GL_PlayerDied                     // TCP
-	GL_KilledPlayer                   // TCP
-	GL_Init                           // TCP
-	GL_StartGame                      // TCP
-)
-const (
-	DialAddr          = iota + 1000 // UDP
-	UpdatePos                       // UDP
-	UpdateRotation                  // UDP
-	PositionBroadcast               // UDP
-	HeartBeat                       // UDP
+	NewUser                = iota + 1    // TCP// Client -> Server packets
+	GetUser                              // TCP
+	Auth                                 // TCP
+	Disconnect                           // TCP
+	GetRooms                             // TCP
+	GetRoomUsers                         // TCP
+	JoinRoom                             // TCP
+	JoinNewRoom                          // TCP
+	LeaveRoom                            // TCP
+	Error                                // tcp
+	GL_UsersIn                           // TCP// Server -> Client packets
+	GL_IsUserManager                     // TCP
+	GL_NewPlayerConnected                // TCP
+	GL_ClientSpawnPosition               // TCP
+	GL_GameOver                          // TCP
+	GL_PlayerDied                        // TCP
+	GL_KilledPlayer                      // TCP
+	GL_Init                              // TCP
+	GL_StartGame                         // TCP
+	DialAddr               = iota + 1000 // UDP
+	UpdatePos                            // UDP
+	UpdateRotation                       // UDP
+	PositionBroadcast                    // UDP
+	HeartBeat                            // UDP
 )
 
 type TBaseReqPacket struct {

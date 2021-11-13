@@ -4,9 +4,7 @@ import (
 	"aroundUsServer/globals"
 	"aroundUsServer/packet"
 	"aroundUsServer/player"
-	"aroundUsServer/utils"
 	"encoding/json"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -43,7 +41,7 @@ func handleTcpPlayer(conn net.Conn) {
 		return
 	}
 
-	var currUser *player.Player
+	//var currUser *player.Player
 
 	for {
 		// Max packet is 1024 bytes long
@@ -90,20 +88,15 @@ func handleTcpPlayer(conn net.Conn) {
 
 		switch clientPacket.Type {
 		case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
-			currUser, err = initializePlayer([]byte(packetData), conn)
+			_, err := initializePlayer([]byte(packetData), conn)
 			if err != nil {
 				SendErrorMsg(conn, "error while making a user: "+err.Error())
 				return
 			}
 
-			defer deInitializePlayer(currUser)
+			//defer deInitializePlayer(currUser)
 
-			//TODO: defer notify all that player left
-
-			//TODO: notify player about all players in lobby
-			//TODO: notify all that player joined
-
-			player.PlayerList[currUser.Uuid] = currUser
+			//player.PlayerList[currUser.Uuid] = currUser
 
 			// conenctedUsersJSON, err := json.Marshal(playerList) // Get all the players before adding the current user
 			// if err != nil {
@@ -181,8 +174,8 @@ func handleTcpPlayer(conn net.Conn) {
 }
 
 func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, error) {
-	player.PlayerListLock.Lock()
-	defer player.PlayerListLock.Unlock()
+	// player.PlayerListLock.Lock()
+	// defer player.PlayerListLock.Unlock()
 
 	var newPlayer *player.Player
 	err := json.Unmarshal(data, &newPlayer)
@@ -196,20 +189,20 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	// check if the name is taken or invalid
 	// we need to keep a counter so the name will be in the format `<name> <count>`
 	var newNameCount int16
-	var nameOk bool
-	oldName := newPlayer.Name
 
-	for !nameOk {
-		nameOk = true
-		for _, player := range player.PlayerList {
-			if player.Name == newPlayer.Name {
-				newNameCount++
-				nameOk = false
-				newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
-				break
-			}
-		}
-	}
+	oldName := newPlayer.Name
+	// var nameOk bool
+	// for !nameOk {
+	// 	nameOk = true
+	// 	for _, player := range player.PlayerList {
+	// 		if player.Name == newPlayer.Name {
+	// 			newNameCount++
+	// 			nameOk = false
+	// 			newPlayer.Name = fmt.Sprintf("%s %d", oldName, newNameCount)
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	if newNameCount == 0 {
 		newPlayer.Name = oldName
@@ -228,9 +221,9 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	player.Colors[newPlayer.Color] = true // set player color as taken
 
 	// check if he is the first one in the lobby, if true set the player to be the game manager
-	if len(player.PlayerList) == 0 {
-		newPlayer.IsManager = true
-	}
+	// if len(player.PlayerList) == 0 {
+	// 	newPlayer.IsManager = true
+	// }
 
 	// set player ID and increase to next one, theoretically this can roll back at 2^31-1
 	newPlayer.Uuid = strconv.Itoa(player.CurrId)
@@ -246,27 +239,27 @@ func initializePlayer(data []byte, tcpConnection net.Conn) (*player.Player, erro
 	return newPlayer, nil
 }
 
-func deInitializePlayer(playerToDelete *player.Player) error {
-	player.PlayerListLock.Lock()
-	defer player.PlayerListLock.Unlock()
+// func deInitializePlayer(playerToDelete *player.Player) error {
+// 	player.PlayerListLock.Lock()
+// 	defer player.PlayerListLock.Unlock()
 
-	delete(player.PlayerList, playerToDelete.Uuid)
+// 	delete(player.PlayerList, playerToDelete.Uuid)
 
-	// give another player the manager
-	if playerToDelete.IsManager {
-		for _, nextPlayer := range player.PlayerList {
-			nextPlayer.IsManager = true
-			break
-		}
-	}
+// 	// give another player the manager
+// 	if playerToDelete.IsManager {
+// 		for _, nextPlayer := range player.PlayerList {
+// 			nextPlayer.IsManager = true
+// 			break
+// 		}
+// 	}
 
-	// free the color
-	player.Colors[playerToDelete.Color] = false
+// 	// free the color
+// 	player.Colors[playerToDelete.Color] = false
 
-	playerToDelete = nil
+// 	playerToDelete = nil
 
-	return nil
-}
+// 	return nil
+// }
 
 func SendErrorMsg(conn net.Conn, msg string) error {
 	log15.Error(msg)
@@ -277,15 +270,15 @@ func SendErrorMsg(conn net.Conn, msg string) error {
 
 // function wont send the message for players in the filter
 func BroadcastTCP(data []byte, packetType int16, userFilter []string) error {
-	for _, user := range player.PlayerList {
-		if !utils.IntInArray(user.Uuid, userFilter) {
-			log15.Error("Sending data to everyone(Filtered) " + string(data))
-			packetToSend := packet.StampPacket("", data, packetType)
-			_, err := packetToSend.SendTcpStream(user.TcpConnection)
-			if err != nil {
-				log15.Error("SendTcpStream", "err", err)
-			}
-		}
-	}
+	// for _, user := range player.PlayerList {
+	// 	if !utils.IntInArray(user.Uuid, userFilter) {
+	// 		log15.Error("Sending data to everyone(Filtered) " + string(data))
+	// 		packetToSend := packet.StampPacket("", data, packetType)
+	// 		_, err := packetToSend.SendTcpStream(user.TcpConnection)
+	// 		if err != nil {
+	// 			log15.Error("SendTcpStream", "err", err)
+	// 		}
+	// 	}
+	// }
 	return nil
 }
