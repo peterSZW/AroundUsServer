@@ -51,7 +51,7 @@ func ListenUDP(host string, port int) {
 	}
 
 	// reate position updater
-	go updatePlayerPosition()
+	go updatePlayerPositionEveryHalfSec()
 
 	//Keep calling this function
 	for {
@@ -99,7 +99,7 @@ func handleIncomingUdpData() {
 			continue
 		}
 
-		var dataPacket packet.ClientPacketRaw
+		var dataPacket packet.TBaseReqPacket
 		err = json.Unmarshal(dequeuedPacket.Data, &dataPacket)
 		if err != nil {
 			log15.Error("Couldn't parse json player data! Skipping iteration!")
@@ -116,16 +116,24 @@ func handleIncomingUdpData() {
 	}
 }
 
-func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw, packetData []byte) error {
+func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket, packetData []byte) error {
 	//log15.Error(clientPacket)
 
-	log15.Error("-<-", string(packetData))
+	log15.Debug("-<-", "packet", string(packetData))
 
 	// log15.Error("#1#", clientPacket)
 	if clientPacket.Type == packet.DialAddr { // {"type":5, "id": 0}
-		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
-			user.UdpAddress = userAddress
+		aplayer, ok := player.PlayerMap.Load(clientPacket.Uuid)
+		if ok {
+			log15.Debug("SET UdpAddress", "Dial", userAddress)
+			aplayer.(*player.Player).UdpAddress = userAddress
+		} else {
+			log15.Debug("Not Found", "uuid", clientPacket.Uuid)
+
 		}
+
+		// if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
+		// }
 		return nil
 	}
 
@@ -159,70 +167,39 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 		PositionBroadcast              // UDP
 	*/
 
-	case packet.NewUser: // example: {"type":1, "data":{"name":"bro", "color": 1}}
-
-		var dataobj packet.TNewUserReq
-		err := json.Unmarshal(packetData, &dataobj)
-
-		if err != nil {
-			log15.Error("Cant parse json init player data!")
-		} else {
-			dataobj.Data.Uuid = dataobj.Uuid
-			player1 := dataobj.Data
-
-			currUser := player1.InitializePlayer()
-
-			{
-
-				//defer deInitializePlayer(currUser)
-				//TODO: defer notify all that player left
-
-				//TODO: notify player about all players in lobby
-				//TODO: notify all that player joined
-
-				currUser.UdpAddress = userAddress
-
-				player.PlayerListLock.Lock()
-				player.PlayerList[currUser.Uuid] = currUser
-				player.PlayerListLock.Unlock()
-
-				for i, obj := range player.PlayerList {
-					fmt.Println("(", i, ")", obj)
-				}
-
-			}
-		}
-
-	case packet.Disconnect: // example: {"type":12, "data":{"name":"bro", "color": 1}}
-
-		var dataobj packet.TDisconnectReq
-		err := json.Unmarshal(packetData, &dataobj)
-
-		if err == nil {
-			log15.Debug("DeInitializePlayer", "do", dataobj)
-			//player1.DeInitializePlayer()
-		} else {
-			log15.Error("Unmarshal", "err", err)
-		}
-
 	case packet.UpdatePos: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
+
 		var dataobj packet.TUpdatePosReq
 		err := json.Unmarshal(packetData, &dataobj)
 		if err != nil {
 			return fmt.Errorf("cant parse position player data")
 		}
-		playee := player.PlayerList[clientPacket.Uuid]
-		if playee != nil {
-			playee.PlayerPosition = dataobj.PP
+
+		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
+		if ok {
+			log15.Debug("SET PlayerPosition", "pos", dataobj.Data)
+			aplayer.(*player.Player).PlayerPosition = dataobj.Data
+			updateOnePlayerPositionNow(aplayer.(*player.Player))
+		} else {
+			log15.Debug("Not Found", "uuid", dataobj.Uuid)
+
 		}
-		//player.PlayerList[clientPacket.Uuid].PlayerPosition = newPosition
 	case packet.UpdateRotation: // {"type":7, "id": 0, "data":{"pitch":42, "yaw":11}}
 		var dataobj packet.TUpdateRotationReq
 		err := json.Unmarshal(packetData, &dataobj)
 		if err != nil {
 			return fmt.Errorf("cant parse rotation player data")
 		}
-		player.PlayerList[clientPacket.Uuid].Rotation = dataobj.PP
+
+		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
+		if ok {
+			log15.Debug("SET Rotation", "Rotation", dataobj.Data)
+			aplayer.(*player.Player).Rotation = dataobj.Data
+			updateOnePlayerPositionNow(aplayer.(*player.Player))
+		} else {
+			log15.Debug("Not Found", "uuid", dataobj.Uuid)
+
+		}
 	default:
 		if user, ok := player.PlayerList[clientPacket.Uuid]; ok {
 			tcp.SendErrorMsg(user.TcpConnection, "Invalid UDP packet type!")
@@ -233,23 +210,66 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.ClientPacketRaw
 	return nil
 }
 
-func updatePlayerPosition() {
+func updateOnePlayerPositionNow(user *player.Player) {
+
+	BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+
+	// if len(player.PlayerList) > 1 {
+	// 	for _, user := range player.PlayerList {
+
+	// 		BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+	// 	}
+	// }
+
+}
+
+func updatePlayerPositionNow() {
+
+	player.PlayerMap.Range(func(k, v interface{}) bool {
+		user := v.(*player.Player)
+		BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+
+		return true
+	})
+
+	// if len(player.PlayerList) > 1 {
+	// 	for _, user := range player.PlayerList {
+
+	// 		BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
+	// 	}
+	// }
+
+}
+
+func updatePlayerPositionEveryHalfSec() {
 	for {
-		if len(player.PlayerList) > 1 {
-			for _, user := range player.PlayerList {
-				//TODO send name or id as well
-				//BUG where only one recieves
-				fmt.Println(user)
-				BroadcastUDP(user, packet.PositionBroadcast, []string{user.Uuid})
-			}
-		}
-		//log15.Error("Loop position")
-		time.Sleep(500 * time.Millisecond)
+		updatePlayerPositionNow()
+
+		time.Sleep(5000 * time.Millisecond)
 	}
 }
 
 // function wont send the message for players in the filter
+
 func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error {
+
+	packetToSend := packet.StampPacket("", data, packetType)
+	player.PlayerMap.Range(func(k, v interface{}) bool {
+		user := v.(*player.Player)
+		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
+			_, err := packetToSend.SendUdpStream(udpConnection, user.UdpAddress)
+			if err != nil {
+				log15.Error("SendUdpStream", "err", err)
+			}
+		}
+
+		return true
+	})
+
+	return nil
+}
+
+func BroadcastUDP_Old(data interface{}, packetType int16, userFilter []string) error {
 	packetToSend := packet.StampPacket("", data, packetType)
 	for _, user := range player.PlayerList {
 		if !utils.IntInArray(user.Uuid, userFilter) && user.UdpAddress != nil {
@@ -262,19 +282,19 @@ func BroadcastUDP(data interface{}, packetType int16, userFilter []string) error
 	return nil
 }
 
-func UnmarshalUser(data []byte) (*player.Player, error) {
-	type Tdata struct {
-		Type int16          `json:"type"`
-		Seq  int64          `json:"seq"`
-		Data *player.Player `json:"data"`
-	}
-	var dataobj Tdata
+// func UnmarshalUser(data []byte) (*player.Player, error) {
+// 	type Tdata struct {
+// 		Type int16          `json:"type"`
+// 		Seq  int64          `json:"seq"`
+// 		Data *player.Player `json:"data"`
+// 	}
+// 	var dataobj Tdata
 
-	err := json.Unmarshal(data, &dataobj)
-	if err != nil {
-		log15.Error("Cant parse json init player data!")
-		return nil, err
-	}
-	return dataobj.Data, nil
+// 	err := json.Unmarshal(data, &dataobj)
+// 	if err != nil {
+// 		log15.Error("Cant parse json init player data!")
+// 		return nil, err
+// 	}
+// 	return dataobj.Data, nil
 
-}
+// }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -62,17 +61,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		}
 		log15.Debug("recv: ", "msg", message, "mt", mt)
 
-		jsonStu := HandleMessage2(message)
-
-		// var msg MessageObj
-
-		// err = json.Unmarshal(message, &msg)
-		// if err != nil {
-		// 	msg.Code = 1
-		// 	msg.Data = string(message)
-
-		// }
-		// jsonStu, _ := json.Marshal(msg)
+		jsonStu := ApiHandleMessage(message)
 
 		err = c.WriteMessage(mt, []byte(jsonStu))
 		if err != nil {
@@ -82,7 +71,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleMessage2(packetData []byte) string {
+func ApiHandleMessage(packetData []byte) string {
 	var dataobj packet.TBaseReqPacket
 	err := json.Unmarshal(packetData, &dataobj)
 	rsp := packet.TBaseRspPacket{}
@@ -103,12 +92,17 @@ func HandleMessage2(packetData []byte) string {
 		if err != nil {
 			log15.Error("Cant parse json init player data!")
 		} else {
+			if dataobj.Data == nil {
+				rsp.Code = 500
+				rsp.Msg = "Data is null."
+				msg, _ := json.Marshal(rsp)
+				return string(msg)
+
+			}
 			dataobj.Data.Uuid = dataobj.Uuid
 			player1 := dataobj.Data
-
-			currUser := player1.InitializePlayer()
-
 			{
+				currUser := player1.InitializePlayer()
 
 				player.PlayerListLock.Lock()
 				player.PlayerList[currUser.Uuid] = currUser
@@ -120,6 +114,20 @@ func HandleMessage2(packetData []byte) string {
 
 			}
 		}
+
+	case packet.Disconnect:
+
+		var dataobj packet.TDisconnectReq
+		err := json.Unmarshal(packetData, &dataobj)
+
+		if err == nil {
+			log15.Debug("PlayerMap.Delete", "do", dataobj)
+			player.PlayerMap.Delete(dataobj.Uuid)
+
+		} else {
+			log15.Error("Unmarshal", "err", err)
+		}
+
 	default:
 		rsp.Code = 500
 		rsp.Msg = "Unknow Type. " + strconv.Itoa(int(dataobj.Type))
@@ -144,7 +152,7 @@ func api(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body_str := string(body)
 	fmt.Println(body_str)
-	result := HandleMessage2(body)
+	result := ApiHandleMessage(body)
 	w.Header().Set("content-type", "text/json")
 	fmt.Fprint(w, string(result))
 
@@ -152,7 +160,7 @@ func api(w http.ResponseWriter, r *http.Request) {
 
 func start_websocket_server() {
 	flag.Parse()
-	log.SetFlags(0)
+	//log.SetFlags(0)
 	http.HandleFunc("/echo", echo)
 	http.HandleFunc("/", home)
 	http.HandleFunc("/api", api)

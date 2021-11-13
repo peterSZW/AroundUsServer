@@ -12,6 +12,9 @@ import (
 var SpawnPositionsStack = make([]PlayerPosition, 100) // holds where the players spawn when respawning after a meeting, functions as a stack
 
 var PlayerList = make(map[string]*Player, 10) // holds the players, maximum 10
+
+var PlayerMap sync.Map
+
 var PlayerListLock sync.Mutex
 var Colors [12]bool // holds the colors, index indicated the color and the value if its taken or not
 var CurrId int      // the next player id when joining
@@ -43,9 +46,17 @@ type PlayerRotation struct {
 
 func (newPlayer *Player) InitializePlayer() *Player {
 
-	log15.Error("====init=======", newPlayer)
+	val, loaded := PlayerMap.LoadOrStore(newPlayer.Uuid, newPlayer)
+	if loaded {
+		val.(*Player).Name = newPlayer.Name
+	}
 
-	//newPlayer.TcpConnection = tcpConnection // Set the player TCP connection socket
+	return val.(*Player)
+}
+
+func (newPlayer *Player) InitializePlayer1() *Player {
+
+	log15.Debug("====init=======", "np", newPlayer)
 
 	// check if the name is taken or invalid
 	// we need to keep a counter so the name will be in the format `<name> <count>`
@@ -103,6 +114,12 @@ func (newPlayer *Player) InitializePlayer() *Player {
 }
 
 func (playerToDelete *Player) DeInitializePlayer() error {
+	PlayerMap.Delete(playerToDelete.Uuid)
+
+	return nil
+}
+
+func (playerToDelete *Player) DeInitializePlayer1() error {
 	PlayerListLock.Lock()
 	defer PlayerListLock.Unlock()
 
@@ -131,5 +148,5 @@ func (user *Player) PrintUser() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("%s \n", p)
+	fmt.Printf("%s %v\n", p, user.UdpAddress)
 }

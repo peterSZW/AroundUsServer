@@ -10,6 +10,8 @@ import (
 	"time"
 
 	//"github.com/inconshreveable/log15"
+
+	"github.com/imroc/req"
 	"github.com/inconshreveable/log15"
 )
 
@@ -25,7 +27,7 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 			log15.Error("Cant read packet!", "err", err)
 			continue
 		}
-		log15.Debug("ReadFromUDP", addr)
+		log15.Debug("ReadFromUDP", "addr", addr)
 		data := buffer[:size]
 
 		var dataPacket packet.ClientPacket
@@ -68,6 +70,17 @@ func client() {
 
 }
 
+var G_PlayerUuid1 string
+var G_PlayerUuid2 string
+var G_PlayerUuid3 string
+
+func init() {
+	G_PlayerUuid1 = NewUUID()
+	G_PlayerUuid2 = NewUUID()
+	G_PlayerUuid3 = NewUUID()
+
+}
+
 func ClientConsoleCLI(udpConnection *net.UDPConn) {
 
 	for {
@@ -76,62 +89,80 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 		//commands := strings.Split(strings.Trim(command, "\n\t/\\'\""), " ")
 		//fmt.Println(command, "|", commands)
 		switch command {
+
+		case "n1":
+			reqData := packet.TNewUserReq{Phone: "12"}
+			reqData.Uuid = G_PlayerUuid1
+			reqData.Type = packet.NewUser
+			reqData.Data = &player.Player{Uuid: reqData.Uuid}
+
+			data, _ := req.Post("http://127.0.0.1:7403/api", req.BodyJSON(&reqData))
+
+			fmt.Print(data, " ")
+		case "n2":
+			reqData := packet.TNewUserReq{Phone: "12"}
+			reqData.Uuid = G_PlayerUuid2
+			reqData.Type = packet.NewUser
+			reqData.Data = &player.Player{Uuid: reqData.Uuid}
+
+			data, _ := req.Post("http://127.0.0.1:7403/api", req.BodyJSON(&reqData))
+
+			fmt.Print(data, " ")
+
+		case "da1":
+			packetToSend := packet.StampPacket(G_PlayerUuid1, nil, packet.DialAddr)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log15.Error("SendUdpStream2", "err", err)
+			}
+		case "da2":
+			packetToSend := packet.StampPacket(G_PlayerUuid2, nil, packet.DialAddr)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log15.Error("SendUdpStream2", "err", err)
+			}
+		case "p1":
+
+			user.Uuid = G_PlayerUuid1
+
+			packetToSend := packet.StampPacket(G_PlayerUuid1, player.PlayerPosition{X: 1, Y: 12}, packet.UpdatePos)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log15.Error("SendUdpStream2", "err", err)
+			}
+		case "p2":
+			user.Uuid = G_PlayerUuid2
+
+			packetToSend := packet.StampPacket(G_PlayerUuid2, player.PlayerPosition{X: 1, Y: 12}, packet.UpdatePos)
+
+			_, err := packetToSend.SendUdpStream2(udpConnection)
+			if err != nil {
+				log15.Error("SendUdpStream2", "err", err)
+			}
+
+		case "d1":
+			reqData := packet.TDisconnectReq{}
+			reqData.Uuid = G_PlayerUuid1
+			reqData.Type = packet.Disconnect
+			data, _ := req.Post("http://127.0.0.1:7403/api", req.BodyJSON(&reqData))
+			fmt.Print(data, " ")
+		case "d2":
+			reqData := packet.TDisconnectReq{}
+			reqData.Uuid = G_PlayerUuid2
+			reqData.Type = packet.Disconnect
+			data, _ := req.Post("http://127.0.0.1:7403/api", req.BodyJSON(&reqData))
+			fmt.Print(data, " ")
 		case "help", "h":
 			log15.Error("help(h)")
-			log15.Error("login(lg)")
-			log15.Error("disconnet(dc) [id]")
-		case "login", "lg":
-			packetToSend := packet.StampPacket("uuid", user, packet.DialAddr)
-
-			_, err := packetToSend.SendUdpStream2(udpConnection)
-			if err != nil {
-				log15.Error("SendUdpStream2", "err", err)
-			}
-		case "init", "it", "1":
-			user.Name = "peter"
-			user.Color = 1
-			user.Uuid = "1"
-			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
-
-			_, err := packetToSend.SendUdpStream2(udpConnection)
-			if err != nil {
-				log15.Error("SendUdpStream2", "err", err)
-			}
-		case "2":
-			user.Name = "leo"
-			user.Color = 2
-			user.Uuid = "2"
-			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
-
-			_, err := packetToSend.SendUdpStream2(udpConnection)
-			if err != nil {
-				log15.Error("SendUdpStream2", "err", err)
-			}
-		case "3":
-			user.Name = "alex"
-			user.Color = 3
-			user.Uuid = "3"
-			packetToSend := packet.StampPacket("uuid", user, packet.NewUser)
-
-			_, err := packetToSend.SendUdpStream2(udpConnection)
-			if err != nil {
-				log15.Error("SendUdpStream2", "err", err)
-			}
-		case "disconnet", "dc":
-			// i, err := strconv.Atoi(parameter)
-			// if err != nil {
-			// 	log15.Error(err.Error() + "Cant convert to number position")
-			// }
-
-			user := player.Player{Uuid: parameter}
-			packetToSend := packet.StampPacket("uuid", user, packet.Disconnect)
-
-			_, err := packetToSend.SendUdpStream2(udpConnection)
-			if err != nil {
-				log15.Error("SendUdpStream2", "err", err)
-			}
+			log15.Error("new (n1,n2,n3)")
+			log15.Error("dial (da1,da2,da3)")
+			log15.Error("pos (p1,p2,p3)")
+			log15.Error("disconnet  (d1,d2,d3)")
 		default:
-			log15.Error("Unknown command")
+			log15.Error("Unknown command (help,h)")
 		}
 	}
 }

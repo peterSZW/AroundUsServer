@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -17,7 +16,7 @@ import (
 
 func ws_client() {
 	flag.Parse()
-	log.SetFlags(0)
+	//log.SetFlags(0)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
