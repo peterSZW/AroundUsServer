@@ -38,8 +38,13 @@ func ServerConsoleCLI() {
 			}
 
 		default:
-			log15.Error("Unknown command1", "cmd", command)
-			time.Sleep(1 * time.Second)
+			if command == "" {
+				//in nohup mode??
+				time.Sleep(1 * time.Hour)
+
+			} else {
+				log15.Error("Unknown  command (help,h)", "cmd", command)
+			}
 		}
 	}
 }
