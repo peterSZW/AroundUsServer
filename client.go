@@ -159,8 +159,14 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 			log15.Error("pos (p1,p2,p3)")
 			log15.Error("disconnet  (d1,d2,d3)")
 		default:
-			log15.Error("Unknown client command (help,h)", "cmd", command)
-			time.Sleep(1 * time.Second)
+			if command == "" {
+				//in nohup mode??
+				time.Sleep(1 * time.Hour)
+
+			} else {
+				log15.Error("Unknown client command (help,h)", "cmd", command)
+			}
+
 		}
 	}
 }
