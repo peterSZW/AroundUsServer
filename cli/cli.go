@@ -4,6 +4,7 @@ import (
 	"aroundUsServer/player"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/inconshreveable/log15"
 )
@@ -37,7 +38,8 @@ func ServerConsoleCLI() {
 			}
 
 		default:
-			log15.Error("Unknown command")
+			log15.Error("Unknown command1", "cmd", command)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
