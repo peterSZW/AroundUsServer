@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"syscall"
+	"time"
+
 	"github.com/gavv/httpexpect"
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -52,6 +56,24 @@ func TestGoConvey1(t *testing.T) {
 		b := []string{"hello", "goconvey"}
 		So(StringSliceEqual(a, b), ShouldBeTrue)
 	})
+}
+
+func TestTime(t *testing.T) {
+	sec, Usec, _ := TimeUsec()
+	fmt.Println(sec, Usec)
+	time.Sleep(100 * time.Millisecond)
+	sec, Usec, _ = TimeUsec()
+	fmt.Println(sec, Usec)
+}
+
+func TimeUsec() (sec uint32, nsec uint32, err error) {
+	var tv syscall.Timeval
+	if e := syscall.Gettimeofday(&tv); e != nil {
+		return 0, 0, e
+
+	}
+
+	return uint32(tv.Sec), uint32(tv.Usec), err
 }
 
 //func TestGoConvey2(t *testing.T) {
