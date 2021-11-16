@@ -165,7 +165,7 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 		//===================================================================
 		//===================================================================
 
-	case packet.HeartBeat: // {"type":6, "id": 0, "data":{"x":0, "y":2, "z":69}}
+	case packet.HeartBeat: //
 
 		var dataobj packet.THeartBeatReq
 		err := json.Unmarshal(packetData, &dataobj)
@@ -214,7 +214,47 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 
 	default:
 		log15.Warn("Unknow Type", "clientPacket", clientPacket)
+		//===================================================================
+	//===================================================================
+	//===================================================================
+	//===================================================================
 
+	//===================================================================
+	//===================================================================
+	//===================================================================
+	//===================================================================
+
+	case packet.Echo: // {"type":7, "id": 0, "data":{"pitch":42, "yaw":11}}
+		var dataobj packet.TEchoReq
+		err := json.Unmarshal(packetData, &dataobj)
+		if err != nil {
+			log15.Error("TEchoReq Unmarshal", "err", err)
+			return
+
+		}
+
+		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
+		if ok {
+
+			aplayer.(*player.Player).LastUpdate = time.Now()
+
+			rspData := packet.TEchoRsp{SendTime: dataobj.SendTime, GetTime: time.Now()}
+			rspData.Type = packet.Echo
+
+			packetJson, err := json.Marshal(rspData)
+			if err != nil {
+				log15.Error("Marshal", "err", err)
+			} else {
+				_, err = udpConnection.WriteToUDP(packetJson, aplayer.(*player.Player).UdpAddress)
+				if err != nil {
+					log15.Error("udpConnection.Write", "err", err)
+				}
+			}
+
+		} else {
+			log15.Warn("Not Found", "uuid", dataobj.Uuid)
+
+		}
 	}
 
 }

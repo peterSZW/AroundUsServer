@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"time"
 )
 
 const (
@@ -32,6 +33,7 @@ const (
 	UpdateRotation                       // UDP
 	PositionBroadcast                    // UDP
 	HeartBeat                            // UDP
+	Echo                                 // UDP
 )
 
 type TBaseReqPacket struct {
@@ -151,8 +153,15 @@ type TPositionBroadcastRsp struct {
 type THeartBeatReq struct {
 	TBaseReqPacket
 }
-type THeartBeatRsp struct {
-	TBaseRspPacket
+type TEchoReq struct {
+	TBaseReqPacket
+	SendTime time.Time `json:"sendtime"`
+}
+
+type TEchoRsp struct {
+	TBaseReqPacket
+	SendTime time.Time `json:"sendtime"`
+	GetTime  time.Time `json:"gettime"`
 }
 
 type ClientPacket struct {
