@@ -66,15 +66,6 @@ func TestTime(t *testing.T) {
 	fmt.Println(sec, Usec)
 }
 
-func TimeUsec() (sec uint32, nsec uint32, err error) {
-	var tv syscall.Timeval
-	if e := syscall.Gettimeofday(&tv); e != nil {
-		return 0, 0, e
-
-	}
-
-	return uint32(tv.Sec), uint32(tv.Usec), err
-}
 
 //func TestGoConvey2(t *testing.T) {
 

@@ -39,15 +39,23 @@ func getIncomingClientUdp(udpConnection *net.UDPConn) {
 			if dataPacket.Type == packet.Echo {
 				var echorsp packet.TEchoRsp
 				_ = json.Unmarshal(data, &echorsp)
-				n := time.Now()
 
-				log15.Debug("ECHO", "total", n.Sub(echorsp.SendTime), "t1", echorsp.GetTime.Sub(echorsp.SendTime), "t2", n.Sub(echorsp.GetTime))
+				//n := time.Now()
+				//log15.Debug("ECHO", "total", n.Sub(echorsp.SendTime), "t1", echorsp.GetTime.Sub(echorsp.SendTime), "t2", n.Sub(echorsp.GetTime))
+				nsec, nusec, _ := packet.TimeUsec()
+				log15.Debug("ECHO",
+					"total", dec_usec(nsec, nusec, echorsp.SendSec, echorsp.SendUsec),
+					"t1", dec_usec(echorsp.GetSec, echorsp.GetUsec, echorsp.SendSec, echorsp.SendUsec))
 
 			}
 		}
 
 	}
 
+}
+
+func dec_usec(sec1 int, usec1 int, sec2 int, usec2 int) int {
+	return (sec1-sec2)*1000000 + (usec1 - usec2)
 }
 
 var user player.Player
@@ -175,7 +183,9 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 				reqData := packet.TEchoReq{}
 				reqData.Uuid = G_PlayerUuid1
 				reqData.Type = packet.Echo
-				reqData.SendTime = time.Now()
+				sec, usec, _ := packet.TimeUsec()
+				reqData.SendSec = sec
+				reqData.SendUsec = usec
 
 				packetJson, err := json.Marshal(reqData)
 				if err != nil {
@@ -195,7 +205,9 @@ func ClientConsoleCLI(udpConnection *net.UDPConn) {
 				reqData := packet.TEchoReq{}
 				reqData.Uuid = G_PlayerUuid1
 				reqData.Type = packet.Echo
-				reqData.SendTime = time.Now()
+				sec, usec, _ := packet.TimeUsec()
+				reqData.SendSec = sec
+				reqData.SendUsec = usec
 
 				packetJson, err := json.Marshal(reqData)
 				if err != nil {

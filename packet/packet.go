@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"time"
+	"syscall"
 )
 
 const (
@@ -153,15 +153,24 @@ type TPositionBroadcastRsp struct {
 type THeartBeatReq struct {
 	TBaseReqPacket
 }
+
 type TEchoReq struct {
 	TBaseReqPacket
-	SendTime time.Time `json:"sendtime"`
+	// SendTime time.Time `json:"sendtime"`
+	GetSec   int `json:"get_sec"`
+	GetUsec  int `json:"get_usec"`
+	SendSec  int `json:"send_sec"`
+	SendUsec int `json:"send_usec"`
 }
 
 type TEchoRsp struct {
 	TBaseReqPacket
-	SendTime time.Time `json:"sendtime"`
-	GetTime  time.Time `json:"gettime"`
+	// SendTime time.Time `json:"sendtime"`
+	// GetTime  time.Time `json:"gettime"`
+	GetSec   int `json:"get_sec"`
+	GetUsec  int `json:"get_usec"`
+	SendSec  int `json:"send_sec"`
+	SendUsec int `json:"send_usec"`
 }
 
 type ClientPacket struct {
@@ -224,4 +233,14 @@ func (packet *ServerPacket) SendUdpStream2(udpConnection *net.UDPConn) (int, err
 		return 0, fmt.Errorf("error while marshaling UDP packet")
 	}
 	return udpConnection.Write([]byte(packetJson))
+}
+
+func TimeUsec() (sec int, nsec int, err error) {
+	var tv syscall.Timeval
+	if e := syscall.Gettimeofday(&tv); e != nil {
+		return 0, 0, e
+
+	}
+
+	return int(tv.Sec), int(tv.Usec), err
 }

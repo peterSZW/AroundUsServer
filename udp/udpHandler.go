@@ -233,28 +233,32 @@ func handleUdpData(userAddress *net.UDPAddr, clientPacket packet.TBaseReqPacket,
 
 		}
 
-		aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
-		if ok {
+		//aplayer, ok := player.PlayerMap.Load(dataobj.Uuid)
+		//if ok
+		{
 
-			aplayer.(*player.Player).LastUpdate = time.Now()
+			//aplayer.(*player.Player).LastUpdate = time.Now()
 
-			rspData := packet.TEchoRsp{SendTime: dataobj.SendTime, GetTime: time.Now()}
+			nsec, nusec, _ := packet.TimeUsec()
+			rspData := packet.TEchoRsp{SendSec: dataobj.SendSec, SendUsec: dataobj.SendUsec, GetSec: nsec, GetUsec: nusec}
+
 			rspData.Type = packet.Echo
 
 			packetJson, err := json.Marshal(rspData)
 			if err != nil {
 				log15.Error("Marshal", "err", err)
 			} else {
-				_, err = udpConnection.WriteToUDP(packetJson, aplayer.(*player.Player).UdpAddress)
+				_, err = udpConnection.WriteToUDP(packetJson, userAddress)
 				if err != nil {
 					log15.Error("udpConnection.Write", "err", err)
 				}
 			}
 
-		} else {
-			log15.Warn("Not Found", "uuid", dataobj.Uuid)
-
 		}
+		//else {
+		//log15.Warn("Not Found", "uuid", dataobj.Uuid)
+
+		//}
 	}
 
 }
